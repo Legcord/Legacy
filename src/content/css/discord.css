@@ -1,0 +1,46 @@
+[customTitlebar] .base-2jDfDU {
+    border-top-left-radius: 8px;
+}
+[customTitlebar] .scroller-3X7KbA {
+    padding: 0;
+    padding-top: 4px;
+}
+[customTitlebar] .backdrop-2ByYRN {
+    top: -30px;
+    padding-top: 30px;
+}
+* {
+    outline: none;
+}
+[class^="socialLinks-"] + [class^="info-"] {
+    padding-right: 0;
+}
+#ac-ver {
+    text-transform: none;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+#ac-ver:hover {
+    text-decoration: underline;
+    color: var(--text-normal);
+}
+
+[data-list-item-id="guildsnav___app-download-button"] {
+    display: none !important;
+}
+
+div#acThemes:after,
+div#acSettings:after,
+div#acForceQuit:after,
+div#acKeybinds:after {
+    content: url("https://raw.githubusercontent.com/Legcord/BrandingStuff/main/ac_white_plug16x.png");
+    margin-right: 5px;
+}
+.container-3jbRo5.info-1hMolH.browserNotice-1u-Y5o {
+    visibility: hidden;
+    display: block !important;
+}
+.container-3jbRo5.info-1hMolH.browserNotice-1u-Y5o:after {
+    content: "You can modify global keybinds using the keybind maker on the left sidebar";
+    visibility: visible;
+}

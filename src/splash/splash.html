@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Legcord</title>
+        <style>
+            @import url("../content/css/splash.css");
+        </style>
+        <script>
+            window.onbeforeunload = function () {
+                const style = document.createElement("style");
+                style.textContent = "body { display: none; }";
+                document.head.append(style);
+            };
+        </script>
+    </head>
+
+    <body>
+        <div class="container">
+            <video autoplay loop class="logo" id="splashscreen-legcord">
+                <source src="https://legcord.app/discord_loading.webm" type="video/webm" />
+            </video>
+            <p id="text-splashscreen"></p>
+            <button id="ignore">Start anyway</button>
+        </div>
+    </body>
+    <script>
+        async function loadLang() {
+            const text = document.getElementById("text-splashscreen");
+            if (window.navigator.onLine === false) {
+                for (let i = 0; i < 5; i++) {
+                    await new Promise((r) => setTimeout(r, 1000));
+                    text.innerHTML = (await internal.getLang("loading_screen_offline")) + (5 - i) + "s";
+                }
+                window.internal.restart();
+            } else {
+                text.innerHTML = await internal.getLang("loading_screen_start");
+
+                function check() {
+                    if (internal.installState === "installing") {
+                        text.innerHTML = "Installing mods";
+                    } else if (internal.installState === "done") {
+                        return true;
+                    } else if (internal.installState === "modDownload") {
+                        text.innerHTML = "Updating " + legcord.mods;
+                    } else if (internal.installState === "none") {
+                        text.innerHTML = "Nothing to install.";
+                        return true;
+                    } else {
+                        return true;
+                    }
+                }
+
+                while (check() === false) await new Promise((r) => setTimeout(r, 10));
+                setTimeout(() => {
+                    window.internal.splashEnd();
+                }, 3000);
+            }
+        }
+
+        loadLang();
+    </script>
+</html>
