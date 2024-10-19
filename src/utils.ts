@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import {app, dialog, globalShortcut} from "electron";
+import { app, dialog, globalShortcut } from "electron";
 import path from "path";
 import fetch from "cross-fetch";
 import extract from "extract-zip";
@@ -36,7 +36,7 @@ export async function checkIfConfigIsBroken(): Promise<void> {
         setup();
         dialog.showErrorBox(
             "Oops, something went wrong.",
-            "Legcord has detected that your configuration file is corrupted, please restart the app and set your settings again. If this issue persists, report it on the support server/Github issues."
+            "Legcord has detected that your configuration file is corrupted, please restart the app and set your settings again. If this issue persists, report it on the support server/Github issues.",
         );
     }
     try {
@@ -74,10 +74,10 @@ export function setup(): void {
         trayIcon: "default",
         doneSetup: false,
         clientName: "Legcord",
-        customIcon: path.join(__dirname, "../", "/assets/desktop.png")
+        customIcon: path.join(__dirname, "../", "/assets/desktop.png"),
     };
     setConfigBulk({
-        ...defaults
+        ...defaults,
     });
 }
 
@@ -124,7 +124,7 @@ export async function injectElectronFlags(): Promise<void> {
     const presets = {
         performance: `--enable-gpu-rasterization --enable-zero-copy --ignore-gpu-blocklist --enable-hardware-overlays=single-fullscreen,single-on-top,underlay --enable-features=EnableDrDc,CanvasOopRasterization,BackForwardCache:TimeToLiveInBackForwardCacheInSeconds/300/should_ignore_blocklists/true/enable_same_site/true,ThrottleDisplayNoneAndVisibilityHiddenCrossOriginIframes,UseSkiaRenderer,WebAssemblyLazyCompilation --disable-features=Vulkan --force_high_performance_gpu`, // Performance
         battery: "--enable-features=TurnOffStreamingMediaCachingOnBattery --force_low_power_gpu", // Known to have better battery life for Chromium?
-        vaapi: "--ignore-gpu-blocklist --enable-features=VaapiVideoDecoder --enable-gpu-rasterization --enable-zero-copy --force_high_performance_gpu --use-gl=desktop --disable-features=UseChromeOSDirectVideoDecoder"
+        vaapi: "--ignore-gpu-blocklist --enable-features=VaapiVideoDecoder --enable-gpu-rasterization --enable-zero-copy --force_high_performance_gpu --use-gl=desktop --disable-features=UseChromeOSDirectVideoDecoder",
     };
     switch (await getConfig("performanceMode")) {
         case "performance":
@@ -311,7 +311,7 @@ export async function setConfigBulk(object: Settings): Promise<void> {
         // Ignore errors when the file doesn't exist or parsing fails
     }
     // Merge the existing data with the new data
-    const mergedData = {...existingData, ...object};
+    const mergedData = { ...existingData, ...object };
     // Write the merged data back to the file
     const toSave = JSON.stringify(mergedData, null, 4);
     fs.writeFileSync(getConfigLocation(), toSave, "utf-8");
@@ -357,11 +357,11 @@ async function updateModBundle(): Promise<void> {
             } else {
                 const clientMods = {
                     vencord: "https://github.com/Vendicated/Vencord/releases/download/devbuild/browser.js",
-                    shelter: "https://raw.githubusercontent.com/uwu/shelter-builds/main/shelter.js"
+                    shelter: "https://raw.githubusercontent.com/uwu/shelter-builds/main/shelter.js",
                 };
                 const clientModsCss = {
                     vencord: "https://github.com/Vendicated/Vencord/releases/download/devbuild/browser.css",
-                    shelter: "https://legcord.app/placeholder.css"
+                    shelter: "https://legcord.app/placeholder.css",
                 };
                 console.log(clientMods[name as keyof typeof clientMods]);
                 let bundle: string = await (await fetch(clientMods[name as keyof typeof clientMods])).text();
@@ -374,7 +374,7 @@ async function updateModBundle(): Promise<void> {
             console.error(e);
             dialog.showErrorBox(
                 "Oops, something went wrong.",
-                "Legcord couldn't install mods, please check if you have stable internet connection and restart the app. If this issue persists, report it on the support server/Github issues."
+                "Legcord couldn't install mods, please check if you have stable internet connection and restart the app. If this issue persists, report it on the support server/Github issues.",
             );
         }
     } else {
@@ -395,7 +395,7 @@ export function updateModInstallState() {
 export async function installModLoader(): Promise<void> {
     if ((await getConfig("mods")) == "none") {
         modInstallState = "none";
-        fs.rmSync(`${app.getPath("userData")}/plugins/loader`, {recursive: true, force: true});
+        fs.rmSync(`${app.getPath("userData")}/plugins/loader`, { recursive: true, force: true });
 
         import("./extensions/plugin");
         console.log("[Mod loader] Skipping");
@@ -410,7 +410,7 @@ export async function installModLoader(): Promise<void> {
     }
 
     try {
-        fs.rmSync(`${app.getPath("userData")}/plugins/loader`, {recursive: true, force: true});
+        fs.rmSync(`${app.getPath("userData")}/plugins/loader`, { recursive: true, force: true });
         modInstallState = "installing";
 
         let zipPath = `${app.getPath("temp")}/loader.zip`;
@@ -424,7 +424,7 @@ export async function installModLoader(): Promise<void> {
         let URLs = [
             "https://legcord.app/loader.zip",
             "https://legcord.vercel.app/loader.zip",
-            "https://raw.githubusercontent.com/Legcord/website/new/public/loader.zip"
+            "https://raw.githubusercontent.com/Legcord/website/new/public/loader.zip",
         ];
         let loaderZip: any;
 
@@ -444,7 +444,7 @@ export async function installModLoader(): Promise<void> {
         }
 
         await streamPipeline(loaderZip.body, fs.createWriteStream(zipPath));
-        await extract(zipPath, {dir: path.join(app.getPath("userData"), "plugins")});
+        await extract(zipPath, { dir: path.join(app.getPath("userData"), "plugins") });
 
         updateModInstallState();
     } catch (e) {
@@ -452,7 +452,7 @@ export async function installModLoader(): Promise<void> {
         console.error(e);
         dialog.showErrorBox(
             "Oops, something went wrong.",
-            "Legcord couldn't install internal mod loader, please check if you have stable internet connection and restart the app. If this issue persists, report it on the support server/Github issues."
+            "Legcord couldn't install internal mod loader, please check if you have stable internet connection and restart the app. If this issue persists, report it on the support server/Github issues.",
         );
     }
 }

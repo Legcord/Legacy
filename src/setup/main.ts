@@ -1,8 +1,8 @@
-import {BrowserWindow, app, ipcMain} from "electron";
+import { BrowserWindow, app, ipcMain } from "electron";
 import path from "path";
 import * as fs from "fs";
-import {iconPath} from "../main";
-import {Settings, getConfigLocation, setConfigBulk} from "../utils";
+import { iconPath } from "../main";
+import { Settings, getConfigLocation, setConfigBulk } from "../utils";
 let setupWindow: BrowserWindow;
 export function createSetupWindow(): void {
     setupWindow = new BrowserWindow({
@@ -16,8 +16,8 @@ export function createSetupWindow(): void {
         webPreferences: {
             sandbox: false,
             spellcheck: false,
-            preload: path.join(__dirname, "preload.js")
-        }
+            preload: path.join(__dirname, "preload.js"),
+        },
     });
     ipcMain.on("saveSettings", (_event, args: Settings) => {
         console.log(args);

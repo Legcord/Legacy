@@ -37,7 +37,7 @@
 
                     // fetchAssetIds
                     const _lookupAsset = Object.values(mod).find(
-                        (e) => typeof e === "function" && e.toString().includes("APPLICATION_ASSETS_FETCH_SUCCESS")
+                        (e) => typeof e === "function" && e.toString().includes("APPLICATION_ASSETS_FETCH_SUCCESS"),
                     );
                     if (_lookupAsset)
                         lookupAsset = async (appId, name) => (await _lookupAsset(appId, [name, undefined]))[0];
@@ -71,12 +71,12 @@
         if (msg.activity?.assets?.large_image)
             msg.activity.assets.large_image = await lookupAsset(
                 msg.activity.application_id,
-                msg.activity.assets.large_image
+                msg.activity.assets.large_image,
             );
         if (msg.activity?.assets?.small_image)
             msg.activity.assets.small_image = await lookupAsset(
                 msg.activity.application_id,
-                msg.activity.assets.small_image
+                msg.activity.assets.small_image,
             );
 
         if (msg.activity) {
@@ -87,6 +87,6 @@
             if (!msg.activity.name) msg.activity.name = app.name;
         }
 
-        Dispatcher.dispatch({type: "LOCAL_ACTIVITY_UPDATE", ...msg}); // set RPC status
+        Dispatcher.dispatch({ type: "LOCAL_ACTIVITY_UPDATE", ...msg }); // set RPC status
     });
 })();

@@ -1,8 +1,8 @@
-import {contextBridge, ipcRenderer} from "electron";
-import {sleep} from "../utils";
+import { contextBridge, ipcRenderer } from "electron";
+import { sleep } from "../utils";
 contextBridge.exposeInMainWorld("manager", {
     add: (keybindName: string) => ipcRenderer.send("addKeybind", keybindName),
-    remove: (keybindName: string) => ipcRenderer.send("removeKeybind", keybindName)
+    remove: (keybindName: string) => ipcRenderer.send("removeKeybind", keybindName),
 });
 ipcRenderer.on("keybindCombo", (_event, keybindName) => {
     sleep(1000);
@@ -24,7 +24,7 @@ ipcRenderer.on("keybindCombo", (_event, keybindName) => {
                     <label class="tgl-btn left" for="${id}"></label>
                 </div>
             </div>
-        `
+        `,
     );
     (document.getElementById(id) as HTMLInputElement)!.checked = true;
     (document.getElementById(id) as HTMLInputElement)!.addEventListener("input", function (evt) {

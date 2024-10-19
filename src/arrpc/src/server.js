@@ -1,6 +1,6 @@
 const rgb = (r, g, b, msg) => `\x1b[38;2;${r};${g};${b}m${msg}\x1b[0m`;
 const log = (...args) => console.log(`[${rgb(88, 101, 242, "arRPC")} > ${rgb(87, 242, 135, "bridge")}]`, ...args);
-const {EventEmitter} = require("events");
+const { EventEmitter } = require("events");
 
 const IPCServer = require("./transports/ipc.js");
 const WSServer = require("./transports/websocket.js");
@@ -18,7 +18,7 @@ class RPCServer extends EventEmitter {
             const handlers = {
                 connection: this.onConnection,
                 message: this.onMessage,
-                close: this.onClose
+                close: this.onClose,
             };
 
             this.ipc = await new IPCServer(handlers);
@@ -39,7 +39,7 @@ class RPCServer extends EventEmitter {
                 config: {
                     cdn_host: "cdn.discordapp.com",
                     api_endpoint: "//discord.com/api",
-                    environment: "production"
+                    environment: "production",
                 },
                 user: {
                     // mock user data using arRPC app/bot
@@ -51,11 +51,11 @@ class RPCServer extends EventEmitter {
                     avatar_decoration_data: null,
                     bot: false,
                     flags: 0,
-                    premium_type: 0
-                }
+                    premium_type: 0,
+                },
             },
             evt: "READY",
-            nonce: null
+            nonce: null,
         });
 
         socket.socketId = socketId++;
@@ -67,18 +67,18 @@ class RPCServer extends EventEmitter {
         this.emit("activity", {
             activity: null,
             pid: socket.lastPid,
-            socketId: socket.socketId.toString()
+            socketId: socket.socketId.toString(),
         });
 
         this.emit("close", socket);
     }
 
-    async onMessage(socket, {cmd, args, nonce}) {
-        this.emit("message", {socket, cmd, args, nonce});
+    async onMessage(socket, { cmd, args, nonce }) {
+        this.emit("message", { socket, cmd, args, nonce });
 
         switch (cmd) {
             case "SET_ACTIVITY":
-                const {activity, pid} = args; // translate given parameters into what discord dispatch expects
+                const { activity, pid } = args; // translate given parameters into what discord dispatch expects
 
                 if (!activity) {
                     // Activity clear
@@ -86,17 +86,17 @@ class RPCServer extends EventEmitter {
                         cmd,
                         data: null,
                         evt: null,
-                        nonce
+                        nonce,
                     });
 
                     return this.emit("activity", {
                         activity: null,
                         pid,
-                        socketId: socket.socketId.toString()
+                        socketId: socket.socketId.toString(),
                     });
                 }
 
-                const {buttons, timestamps, instance} = activity;
+                const { buttons, timestamps, instance } = activity;
 
                 socket.lastPid = pid ?? socket.lastPid;
 
@@ -122,10 +122,10 @@ class RPCServer extends EventEmitter {
                         metadata,
                         flags: instance ? 1 << 0 : 0,
                         ...activity,
-                        ...extra
+                        ...extra,
                     },
                     pid,
-                    socketId: socket.socketId.toString()
+                    socketId: socket.socketId.toString(),
                 });
 
                 socket.send?.({
@@ -134,30 +134,30 @@ class RPCServer extends EventEmitter {
                         ...activity,
                         name: "",
                         application_id: socket.clientId,
-                        type: 0
+                        type: 0,
                     },
                     evt: null,
-                    nonce
+                    nonce,
                 });
 
                 break;
 
             case "GUILD_TEMPLATE_BROWSER":
             case "INVITE_BROWSER":
-                const {code} = args;
+                const { code } = args;
 
                 const isInvite = cmd === "INVITE_BROWSER";
                 const callback = (isValid = true) => {
                     socket.send({
                         cmd,
                         data: isValid
-                            ? {code}
+                            ? { code }
                             : {
                                   code: isInvite ? 4011 : 4017,
-                                  message: `Invalid ${isInvite ? "invite" : "guild template"} id: ${code}`
+                                  message: `Invalid ${isInvite ? "invite" : "guild template"} id: ${code}`,
                               },
                         evt: isValid ? null : "ERROR",
-                        nonce
+                        nonce,
                     });
                 };
 

@@ -1,6 +1,6 @@
-import {BrowserWindow, globalShortcut, ipcMain, shell} from "electron";
+import { BrowserWindow, globalShortcut, ipcMain, shell } from "electron";
 import path from "path";
-import {getConfig, registerGlobalKeybinds, setConfig} from "../utils";
+import { getConfig, registerGlobalKeybinds, setConfig } from "../utils";
 let keybindWindow: BrowserWindow;
 let instance = 0;
 
@@ -23,16 +23,16 @@ export function createKeybindWindow(): void {
             autoHideMenuBar: true,
             webPreferences: {
                 sandbox: false,
-                preload: path.join(__dirname, "preload.js")
-            }
+                preload: path.join(__dirname, "preload.js"),
+            },
         });
         async function makerLoadPage(): Promise<void> {
             globalShortcut.unregisterAll();
             keybindWindow.loadURL(`file://${__dirname}/maker.html`);
         }
-        keybindWindow.webContents.setWindowOpenHandler(({url}) => {
+        keybindWindow.webContents.setWindowOpenHandler(({ url }) => {
             shell.openExternal(url);
-            return {action: "deny"};
+            return { action: "deny" };
         });
         ipcMain.on("addKeybind", async (_event, keybind) => {
             var keybinds = await getConfig("keybinds");

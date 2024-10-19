@@ -1,8 +1,8 @@
-import {contextBridge, ipcRenderer} from "electron";
-import {injectTitlebar} from "./titlebar";
+import { contextBridge, ipcRenderer } from "electron";
+import { injectTitlebar } from "./titlebar";
 const CANCEL_ID = "desktop-capturer-selection__cancel";
 const desktopCapturer = {
-    getSources: (opts: any) => ipcRenderer.invoke("DESKTOP_CAPTURER_GET_SOURCES", opts)
+    getSources: (opts: any) => ipcRenderer.invoke("DESKTOP_CAPTURER_GET_SOURCES", opts),
 };
 interface IPCSources {
     id: string;
@@ -11,20 +11,20 @@ interface IPCSources {
 }
 async function getDisplayMediaSelector(): Promise<string> {
     const sources: IPCSources[] = await desktopCapturer.getSources({
-        types: ["screen", "window"]
+        types: ["screen", "window"],
     });
     return `<div class="desktop-capturer-selection__scroller">
   <ul class="desktop-capturer-selection__list">
     ${sources
         .map(
-            ({id, name, thumbnail}) => `
+            ({ id, name, thumbnail }) => `
       <li class="desktop-capturer-selection__item">
         <button class="desktop-capturer-selection__btn" data-id="${id}" title="${name}">
           <img class="desktop-capturer-selection__thumbnail" src="${thumbnail.toDataURL()}" />
           <span class="desktop-capturer-selection__name">${name}</span>
         </button>
       </li>
-    `
+    `,
         )
         .join("")}
     <li class="desktop-capturer-selection__item">
@@ -40,11 +40,11 @@ contextBridge.exposeInMainWorld("legcord", {
         show: () => ipcRenderer.send("win-show"),
         hide: () => ipcRenderer.send("win-hide"),
         minimize: () => ipcRenderer.send("win-minimize"),
-        maximize: () => ipcRenderer.send("win-maximize")
+        maximize: () => ipcRenderer.send("win-maximize"),
     },
     titlebar: {
         injectTitlebar: () => injectTitlebar(),
-        isTitlebar: ipcRenderer.sendSync("titlebar")
+        isTitlebar: ipcRenderer.sendSync("titlebar"),
     },
     electron: process.versions.electron,
     channel: ipcRenderer.sendSync("channel"),
@@ -58,13 +58,13 @@ contextBridge.exposeInMainWorld("legcord", {
     version: ipcRenderer.sendSync("get-app-version", "app-version"),
     mods: ipcRenderer.sendSync("clientmod"),
     packageVersion: ipcRenderer.sendSync("get-package-version", "app-version"),
-    openSettingsWindow: () => ipcRenderer.send("openSettingsWindow")
+    openSettingsWindow: () => ipcRenderer.send("openSettingsWindow"),
 });
 let windowCallback: (arg0: object) => void;
 contextBridge.exposeInMainWorld("LegcordRPC", {
     listen: (callback: any) => {
         windowCallback = callback;
-    }
+    },
 });
 ipcRenderer.on("rpc", (_event, data: object) => {
     console.log(data);

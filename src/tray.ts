@@ -1,9 +1,9 @@
 import * as fs from "fs";
-import {Menu, MessageBoxOptions, Tray, app, dialog, nativeImage} from "electron";
-import {createInviteWindow, mainWindow} from "./window";
-import {getConfig, getConfigLocation, getDisplayVersion, setConfig} from "./utils";
+import { Menu, MessageBoxOptions, Tray, app, dialog, nativeImage } from "electron";
+import { createInviteWindow, mainWindow } from "./window";
+import { getConfig, getConfigLocation, getDisplayVersion, setConfig } from "./utils";
 import * as path from "path";
-import {createSettingsWindow} from "./settings/main";
+import { createSettingsWindow } from "./settings/main";
 export let tray: any = null;
 let trayIcon = "ac_plug_colored";
 app.whenReady().then(async () => {
@@ -15,16 +15,16 @@ app.whenReady().then(async () => {
     let trayVerIcon;
     trayVerIcon = function () {
         if (process.platform == "win32") {
-            return trayPath.resize({height: 16});
+            return trayPath.resize({ height: 16 });
         } else if (process.platform == "darwin") {
-            return trayPath.resize({height: 18});
+            return trayPath.resize({ height: 18 });
         } else if (process.platform == "linux") {
-            return trayPath.resize({height: 24});
+            return trayPath.resize({ height: 24 });
         }
         return undefined;
     };
 
-    if (process.platform == "darwin" && trayPath.getSize().height > 22) trayPath = trayPath.resize({height: 22});
+    if (process.platform == "darwin" && trayPath.getSize().height > 22) trayPath = trayPath.resize({ height: 22 });
     if (await getConfig("tray")) {
         let clientName = (await getConfig("clientName")) ?? "Legcord";
         tray = new Tray(trayPath);
@@ -32,7 +32,7 @@ app.whenReady().then(async () => {
             const contextMenu = Menu.buildFromTemplate([
                 {
                     label: `Finish the setup first!`,
-                    enabled: false
+                    enabled: false,
                 },
                 {
                     label: `Quit ${clientName}`,
@@ -43,8 +43,8 @@ app.whenReady().then(async () => {
                             console.log('Closed during setup. "settings.json" was deleted');
                             app.quit();
                         });
-                    }
-                }
+                    },
+                },
             ]);
             tray.setContextMenu(contextMenu);
         } else {
@@ -52,38 +52,38 @@ app.whenReady().then(async () => {
                 {
                     label: `${clientName} ${getDisplayVersion()}`,
                     icon: trayVerIcon(),
-                    enabled: false
+                    enabled: false,
                 },
                 {
-                    type: "separator"
+                    type: "separator",
                 },
                 {
                     label: `Open ${clientName}`,
                     click() {
                         mainWindow.show();
-                    }
+                    },
                 },
                 {
                     label: "Open Settings",
                     click() {
                         createSettingsWindow();
-                    }
+                    },
                 },
                 {
                     label: "Support Discord Server",
                     click() {
                         createInviteWindow("TnhxcqynZ2");
-                    }
+                    },
                 },
                 {
-                    type: "separator"
+                    type: "separator",
                 },
                 {
                     label: `Quit ${clientName}`,
                     click() {
                         app.quit();
-                    }
-                }
+                    },
+                },
             ]);
             tray.setContextMenu(contextMenu);
         }
@@ -100,10 +100,10 @@ app.whenReady().then(async () => {
                     defaultId: 1,
                     title: "Tray icon choice",
                     message: `Do you want to use tray icons?`,
-                    detail: "Linux may not work well with tray icons. Depending on your system configuration, you may not be able to see the tray icon. Enable at your own risk. Can be changed later."
+                    detail: "Linux may not work well with tray icons. Depending on your system configuration, you may not be able to see the tray icon. Enable at your own risk. Can be changed later.",
                 };
 
-                dialog.showMessageBox(mainWindow, options).then(({response}) => {
+                dialog.showMessageBox(mainWindow, options).then(({ response }) => {
                     if (response == 0) {
                         setConfig("tray", true);
                     } else {

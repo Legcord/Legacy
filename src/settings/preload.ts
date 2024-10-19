@@ -1,4 +1,4 @@
-import {contextBridge, ipcRenderer} from "electron";
+import { contextBridge, ipcRenderer } from "electron";
 //import {addStyle} from "../utils";
 console.log("Legcord Settings");
 console.log(process.platform);
@@ -15,7 +15,7 @@ contextBridge.exposeInMainWorld("settings", {
     copyDebugInfo: () => ipcRenderer.send("copyDebugInfo"),
     copyGPUInfo: () => ipcRenderer.send("copyGPUInfo"),
     crash: () => ipcRenderer.send("crash"),
-    os: process.platform
+    os: process.platform,
 });
 
 ipcRenderer.on("themeLoader", (_event, message) => {

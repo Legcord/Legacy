@@ -1,9 +1,9 @@
 const rgb = (r, g, b, msg) => `\x1b[38;2;${r};${g};${b}m${msg}\x1b[0m`;
 const log = (...args) => console.log(`[${rgb(88, 101, 242, "arRPC")} > ${rgb(235, 69, 158, "websocket")}]`, ...args);
 
-const {WebSocketServer} = require("ws");
-const {createServer} = require("http");
-const {parse} = require("querystring");
+const { WebSocketServer } = require("ws");
+const { createServer } = require("http");
+const { parse } = require("querystring");
 
 const portRange = [6463, 6472]; // ports available/possible: 6463-6472
 
@@ -33,7 +33,7 @@ class WSServer {
                             }
                         });
 
-                        wss = new WebSocketServer({server: http});
+                        wss = new WebSocketServer({ server: http });
                         wss.on("error", (e) => {
                             // log('wss error', e);
                         });
@@ -74,7 +74,7 @@ class WSServer {
                 "https://discord.com",
                 "https://ptb.discord.com",
                 "https://canary.discord.com",
-                "https://replugged.dev"
+                "https://replugged.dev",
             ].includes(origin)
         ) {
             log("disallowed origin", origin);

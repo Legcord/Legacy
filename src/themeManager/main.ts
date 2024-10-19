@@ -1,8 +1,8 @@
-import {BrowserWindow, app, dialog, ipcMain, shell} from "electron";
-import {sleep} from "../utils";
+import { BrowserWindow, app, dialog, ipcMain, shell } from "electron";
+import { sleep } from "../utils";
 import path from "path";
 import fs from "fs";
-import {createInviteWindow, mainWindow} from "../window";
+import { createInviteWindow, mainWindow } from "../window";
 let themeWindow: BrowserWindow;
 let instance = 0;
 interface ThemeManifest {
@@ -26,7 +26,7 @@ function parseBDManifest(content: string) {
     if (!content.startsWith("/**")) {
         throw new Error("Not a manifest.");
     }
-    let manifest: ThemeManifest = {theme: "src.css"};
+    let manifest: ThemeManifest = { theme: "src.css" };
 
     let match;
     while ((match = metaReg.exec(content)) !== null) {
@@ -107,8 +107,8 @@ export function createTManagerWindow(): void {
             autoHideMenuBar: true,
             webPreferences: {
                 sandbox: false,
-                preload: path.join(__dirname, "preload.js")
-            }
+                preload: path.join(__dirname, "preload.js"),
+            },
         });
         //setWindowHandler doesn't work for some reason
         themeWindow.webContents.on("will-navigate", function (e, url) {
@@ -157,10 +157,10 @@ export function createTManagerWindow(): void {
         ipcMain.on("uninstallTheme", async (_event, id: string) => {
             let themePath = path.join(themesFolder, id);
             if (fs.existsSync(themePath)) {
-                fs.rmdirSync(themePath, {recursive: true});
+                fs.rmdirSync(themePath, { recursive: true });
                 console.log(`Removed ${id} folder`);
             } else if (fs.existsSync(path.join(themesFolder, `${id}-BD`))) {
-                fs.rmdirSync(path.join(themesFolder, `${id}-BD`), {recursive: true});
+                fs.rmdirSync(path.join(themesFolder, `${id}-BD`), { recursive: true });
                 console.log(`Removed ${id} folder`);
             }
             themeWindow.webContents.reload();
@@ -183,14 +183,14 @@ export function createTManagerWindow(): void {
                 dialog.showMessageBoxSync({
                     type: "info",
                     title: "BD Theme import success",
-                    message: "Successfully imported theme from link."
+                    message: "Successfully imported theme from link.",
                 });
                 themeWindow.webContents.reload();
                 mainWindow.webContents.reload();
             } catch (e) {
                 dialog.showErrorBox(
                     "BD Theme import fail",
-                    "Failed to import theme from link. Please make sure that it's a valid BetterDiscord Theme."
+                    "Failed to import theme from link. Please make sure that it's a valid BetterDiscord Theme.",
                 );
             }
         });

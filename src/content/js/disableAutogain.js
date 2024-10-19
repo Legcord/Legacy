@@ -36,7 +36,7 @@ function setLegacyChromeConstraint(constraint, name, value) {
     if (!constraint.optional) {
         constraint.optional = [];
     }
-    constraint.optional.push({[name]: value});
+    constraint.optional.push({ [name]: value });
 }
 function setConstraint(constraint, name, value) {
     if (constraint.advanced) {

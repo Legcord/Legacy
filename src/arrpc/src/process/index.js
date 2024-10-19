@@ -45,7 +45,7 @@ class ProcessServer {
                 toCompare.push(p.replace("x64", ""));
             }
 
-            for (const {executables, id, name} of DetectableDB) {
+            for (const { executables, id, name } of DetectableDB) {
                 if (
                     executables?.some((x) => {
                         if (x.is_launcher) return false;
@@ -71,7 +71,7 @@ class ProcessServer {
                     // Resending this on evry scan is intentional, so that in the case that arRPC scans processes before Discord, existing activities will be sent
                     this.handlers.message(
                         {
-                            socketId: id
+                            socketId: id,
                         },
                         {
                             cmd: "SET_ACTIVITY",
@@ -80,12 +80,12 @@ class ProcessServer {
                                     application_id: id,
                                     name,
                                     timestamps: {
-                                        start: timestamps[id]
-                                    }
+                                        start: timestamps[id],
+                                    },
                                 },
-                                pid
-                            }
-                        }
+                                pid,
+                            },
+                        },
                     );
                 }
             }
@@ -98,15 +98,15 @@ class ProcessServer {
 
                 this.handlers.message(
                     {
-                        socketId: id
+                        socketId: id,
                     },
                     {
                         cmd: "SET_ACTIVITY",
                         args: {
                             activity: null,
-                            pid: pids[id]
-                        }
-                    }
+                            pid: pids[id],
+                        },
+                    },
                 );
             }
         }

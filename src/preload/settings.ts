@@ -1,12 +1,12 @@
 import * as path from "path";
 import * as fs from "fs";
-import {addStyle} from "../utils";
+import { addStyle } from "../utils";
 
 var webview = `<webview src="${path.join("file://", __dirname, "../", "/settings/settings.html")}" preload="${path.join(
     "file://",
     __dirname,
     "../",
-    "/settings/preload.js"
+    "/settings/preload.js",
 )}" id="inAppSettings"></webview>`;
 
 export function injectSettings() {

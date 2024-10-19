@@ -3,14 +3,14 @@ const log = (...args) => console.log(`[${rgb(88, 101, 242, "arRPC")}]`, ...args)
 
 log("arRPC v3.4.0 Legcord");
 const RPCServer = require("./server.js");
-const {mainWindow} = require("../../../ts-out/window.js");
+const { mainWindow } = require("../../../ts-out/window.js");
 
 async function run() {
     const server = await new RPCServer();
     server.on("activity", (data) => mainWindow.webContents.send("rpc", data));
     server.on("invite", (code) => {
         console.log(code);
-        const {createInviteWindow} = require("../../../ts-out/window.js");
+        const { createInviteWindow } = require("../../../ts-out/window.js");
         createInviteWindow(code);
     });
 }

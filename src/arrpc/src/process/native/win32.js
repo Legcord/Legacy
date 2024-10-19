@@ -1,4 +1,4 @@
-const {exec} = require("child_process");
+const { exec } = require("child_process");
 
 const getProcesses = () =>
     new Promise((res) =>
@@ -13,8 +13,8 @@ const getProcesses = () =>
                         const parsed = x.trim().split(",").slice(1).reverse();
                         return [parseInt(parsed[0]) || parsed[0], parsed[2] || parsed[1]];
                     })
-                    .filter((x) => x[1])
+                    .filter((x) => x[1]),
             );
-        })
+        }),
     );
-module.exports = {getProcesses};
+module.exports = { getProcesses };

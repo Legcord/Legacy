@@ -1,10 +1,10 @@
 import electron from "electron";
-import {getConfig} from "../utils";
+import { getConfig } from "../utils";
 
 const unstrictCSP = (): void => {
     console.log("Setting up CSP unstricter...");
 
-    electron.session.defaultSession.webRequest.onHeadersReceived(({responseHeaders, resourceType}, done) => {
+    electron.session.defaultSession.webRequest.onHeadersReceived(({ responseHeaders, resourceType }, done) => {
         if (!responseHeaders) return done({});
 
         if (resourceType === "mainFrame") {
@@ -15,7 +15,7 @@ const unstrictCSP = (): void => {
             responseHeaders["content-type"] = ["text/css"];
         }
 
-        return done({responseHeaders});
+        return done({ responseHeaders });
     });
 };
 

@@ -1,6 +1,6 @@
 //ipc stuff
-import {app, clipboard, desktopCapturer, ipcMain, nativeImage, shell} from "electron";
-import {mainWindow} from "./window";
+import { app, clipboard, desktopCapturer, ipcMain, nativeImage, shell } from "electron";
+import { mainWindow } from "./window";
 import {
     Settings,
     getConfig,
@@ -13,16 +13,16 @@ import {
     packageVersion,
     setConfigBulk,
     setLang,
-    sleep
+    sleep,
 } from "./utils";
-import {customTitlebar} from "./main";
-import {createSettingsWindow} from "./settings/main";
+import { customTitlebar } from "./main";
+import { createSettingsWindow } from "./settings/main";
 import os from "os";
 import fs from "fs";
 import path from "path";
-import {createTManagerWindow} from "./themeManager/main";
-import {splashWindow} from "./splash/main";
-import {createKeybindWindow} from "./keybindMaker/main";
+import { createTManagerWindow } from "./themeManager/main";
+import { splashWindow } from "./splash/main";
+import { createKeybindWindow } from "./keybindMaker/main";
 const userDataPath = app.getPath("userData");
 const storagePath = path.join(userDataPath, "/storage/");
 const themesPath = path.join(userDataPath, "/themes/");
@@ -178,7 +178,7 @@ export function registerIpc(): void {
         clipboard.writeText(
             `**OS:** ${os.platform()} ${os.version()}\n**Architecture:** ${os.arch()}\n**Legcord version:** ${getVersion()}\n**Electron version:** ${
                 process.versions.electron
-            }\n\`${settingsFileContent}\``
+            }\n\`${settingsFileContent}\``,
         );
     });
     ipcMain.on("copyGPUInfo", () => {

@@ -2,7 +2,7 @@
 // I had to add most of the window creation code here to split both into seperete functions
 // WHY? Because I can't use the same code for both due to annoying bug with value `frame` not responding to variables
 // I'm sorry for this mess but I'm not sure how to fix it.
-import {BrowserWindow, MessageBoxOptions, app, dialog, nativeImage, shell} from "electron";
+import { BrowserWindow, MessageBoxOptions, app, dialog, nativeImage, shell } from "electron";
 import path from "path";
 import {
     contentPath,
@@ -11,15 +11,15 @@ import {
     getWindowState,
     registerGlobalKeybinds,
     setConfig,
-    setWindowState
+    setWindowState,
 } from "./utils";
-import {registerIpc} from "./ipc";
-import {setMenu} from "./menu";
+import { registerIpc } from "./ipc";
+import { setMenu } from "./menu";
 import * as fs from "fs";
 import contextMenu from "electron-context-menu";
 import os from "os";
-import {tray} from "./tray";
-import {iconPath} from "./main";
+import { tray } from "./tray";
+import { iconPath } from "./main";
 export let mainWindow: BrowserWindow;
 export let inviteWindow: BrowserWindow;
 let forceQuit = false;
@@ -36,7 +36,7 @@ contextMenu({
             visible: parameters.selectionText.trim().length > 0,
             click: () => {
                 shell.openExternal(`https://google.com/search?q=${encodeURIComponent(parameters.selectionText)}`);
-            }
+            },
         },
         {
             label: "Search with DuckDuckGo",
@@ -44,9 +44,9 @@ contextMenu({
             visible: parameters.selectionText.trim().length > 0,
             click: () => {
                 shell.openExternal(`https://duckduckgo.com/?q=${encodeURIComponent(parameters.selectionText)}`);
-            }
-        }
-    ]
+            },
+        },
+    ],
 });
 async function doAfterDefiningTheWindow(): Promise<void> {
     if ((await getWindowState("isMaximized")) ?? false) {
@@ -87,9 +87,9 @@ async function doAfterDefiningTheWindow(): Promise<void> {
     app.on("activate", function () {
         app.show();
     });
-    mainWindow.webContents.setWindowOpenHandler(({url}) => {
+    mainWindow.webContents.setWindowOpenHandler(({ url }) => {
         // Allow about:blank (used by Vencord QuickCss popup)
-        if (url === "about:blank") return {action: "allow"};
+        if (url === "about:blank") return { action: "allow" };
         // Allow Discord stream popout
         if (
             url === "https://discord.com/popout" ||
@@ -99,8 +99,8 @@ async function doAfterDefiningTheWindow(): Promise<void> {
             return {
                 action: "allow",
                 overrideBrowserWindowOptions: {
-                    alwaysOnTop: true
-                }
+                    alwaysOnTop: true,
+                },
             };
         if (url.startsWith("https:") || url.startsWith("http:") || url.startsWith("mailto:")) {
             shell.openExternal(url);
@@ -115,10 +115,10 @@ async function doAfterDefiningTheWindow(): Promise<void> {
                 message: `Do you want to open ${url}?`,
                 detail: "This url was detected to not use normal browser protocols. It could mean that this url leads to a local program on your computer. Please check if you recognise it, before proceeding!",
                 checkboxLabel: "Remember my answer and ignore this warning for future sessions",
-                checkboxChecked: false
+                checkboxChecked: false,
             };
 
-            dialog.showMessageBox(mainWindow, options).then(({response, checkboxChecked}) => {
+            dialog.showMessageBox(mainWindow, options).then(({ response, checkboxChecked }) => {
                 console.log(response, checkboxChecked);
                 if (checkboxChecked) {
                     if (response == 0) {
@@ -132,12 +132,12 @@ async function doAfterDefiningTheWindow(): Promise<void> {
                 }
             });
         }
-        return {action: "deny"};
+        return { action: "deny" };
     });
 
     mainWindow.webContents.session.webRequest.onBeforeRequest(
-        {urls: ["https://*/api/v*/science", "https://sentry.io/*", "https://*.nel.cloudflare.com/*"]},
-        (_, callback) => callback({cancel: true})
+        { urls: ["https://*/api/v*/science", "https://sentry.io/*", "https://*.nel.cloudflare.com/*"] },
+        (_, callback) => callback({ cancel: true }),
     );
 
     if ((await getConfig("trayIcon")) == "default" || (await getConfig("dynamicIcon"))) {
@@ -161,9 +161,9 @@ async function doAfterDefiningTheWindow(): Promise<void> {
             fs.writeFileSync(path.join(app.getPath("temp"), "/", "tray.png"), buf, "utf-8");
             let trayPath = nativeImage.createFromPath(path.join(app.getPath("temp"), "/", "tray.png"));
             if (process.platform === "darwin" && trayPath.getSize().height > 22)
-                trayPath = trayPath.resize({height: 22});
+                trayPath = trayPath.resize({ height: 22 });
             if (process.platform === "win32" && trayPath.getSize().height > 32)
-                trayPath = trayPath.resize({height: 32});
+                trayPath = trayPath.resize({ height: 32 });
             if (await getConfig("tray")) {
                 if ((await getConfig("trayIcon")) == "default") {
                     tray.setImage(trayPath);
@@ -182,19 +182,19 @@ async function doAfterDefiningTheWindow(): Promise<void> {
             if (title.startsWith("•"))
                 return mainWindow.setOverlayIcon(
                     nativeImage.createFromPath(path.join(__dirname, "../", "/assets/badge-11.ico")),
-                    "You have some unread messages."
+                    "You have some unread messages.",
                 );
             if (title.startsWith("(")) {
                 const pings = parseInt(/\((\d+)\)/.exec(title)![1]);
                 if (pings > 9) {
                     return mainWindow.setOverlayIcon(
                         nativeImage.createFromPath(path.join(__dirname, "../", "/assets/badge-10.ico")),
-                        "You have some unread messages."
+                        "You have some unread messages.",
                     );
                 } else {
                     return mainWindow.setOverlayIcon(
                         nativeImage.createFromPath(path.join(__dirname, "../", "/assets/badge-" + pings + ".ico")),
-                        "You have some unread messages."
+                        "You have some unread messages.",
                     );
                 }
             }
@@ -208,7 +208,7 @@ async function doAfterDefiningTheWindow(): Promise<void> {
         if (!title.endsWith(armCordSuffix)) {
             e.preventDefault();
             void mainWindow.webContents.executeJavaScript(
-                `document.title = '${title.replace("Discord |", "") + armCordSuffix}'`
+                `document.title = '${title.replace("Discord |", "") + armCordSuffix}'`,
             );
         }
     });
@@ -237,7 +237,7 @@ async function doAfterDefiningTheWindow(): Promise<void> {
                 } else {
                     mainWindow.webContents.send(
                         "themeLoader",
-                        fs.readFileSync(`${themesFolder}/${file}/${themeFile.theme}`, "utf-8")
+                        fs.readFileSync(`${themesFolder}/${file}/${themeFile.theme}`, "utf-8"),
                     );
                     console.log(`%cLoaded ${themeFile.name} made by ${themeFile.author}`, "color:red");
                 }
@@ -257,7 +257,7 @@ async function doAfterDefiningTheWindow(): Promise<void> {
                 height,
                 isMaximized: mainWindow.isMaximized(),
                 x: mainWindow.getPosition()[0],
-                y: mainWindow.getPosition()[1]
+                y: mainWindow.getPosition()[1],
             });
             if (await getConfig("minimizeToTray")) {
                 e.preventDefault();
@@ -322,8 +322,8 @@ export async function createCustomWindow(): Promise<void> {
             webviewTag: true,
             sandbox: false,
             preload: path.join(__dirname, "preload/preload.js"),
-            spellcheck: await getConfig("spellcheck")
-        }
+            spellcheck: await getConfig("spellcheck"),
+        },
     });
     doAfterDefiningTheWindow();
 }
@@ -344,8 +344,8 @@ export async function createNativeWindow(): Promise<void> {
             webviewTag: true,
             sandbox: false,
             preload: path.join(__dirname, "preload/preload.js"),
-            spellcheck: await getConfig("spellcheck")
-        }
+            spellcheck: await getConfig("spellcheck"),
+        },
     });
     doAfterDefiningTheWindow();
 }
@@ -366,8 +366,8 @@ export async function createTransparentWindow(): Promise<void> {
             sandbox: false,
             webviewTag: true,
             preload: path.join(__dirname, "preload/preload.js"),
-            spellcheck: await getConfig("spellcheck")
-        }
+            spellcheck: await getConfig("spellcheck"),
+        },
     });
     doAfterDefiningTheWindow();
 }
@@ -382,12 +382,12 @@ export async function createInviteWindow(code: string): Promise<void> {
         autoHideMenuBar: true,
         webPreferences: {
             sandbox: false,
-            spellcheck: await getConfig("spellcheck")
-        }
+            spellcheck: await getConfig("spellcheck"),
+        },
     });
     let formInviteURL = `https://discord.com/invite/${code}`;
     inviteWindow.webContents.session.webRequest.onBeforeRequest((details, callback) => {
-        if (details.url.includes("ws://")) return callback({cancel: true});
+        if (details.url.includes("ws://")) return callback({ cancel: true });
         return callback({});
     });
     inviteWindow.loadURL(formInviteURL);

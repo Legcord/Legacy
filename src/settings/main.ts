@@ -1,5 +1,5 @@
-import {BrowserWindow, app, shell} from "electron";
-import {getDisplayVersion} from "../utils";
+import { BrowserWindow, app, shell } from "electron";
+import { getDisplayVersion } from "../utils";
 import path from "path";
 import fs from "fs";
 let settingsWindow: BrowserWindow;
@@ -24,8 +24,8 @@ export function createSettingsWindow(): void {
             autoHideMenuBar: true,
             webPreferences: {
                 sandbox: false,
-                preload: path.join(__dirname, "preload.js")
-            }
+                preload: path.join(__dirname, "preload.js"),
+            },
         });
         async function settingsLoadPage(): Promise<void> {
             settingsWindow.loadURL(`file://${__dirname}/settings.html`);
@@ -54,7 +54,7 @@ export function createSettingsWindow(): void {
                     } else {
                         settingsWindow.webContents.send(
                             "themeLoader",
-                            fs.readFileSync(`${themesFolder}/${file}/${themeFile.theme}`, "utf-8")
+                            fs.readFileSync(`${themesFolder}/${file}/${themeFile.theme}`, "utf-8"),
                         );
                         console.log(`%cLoaded ${themeFile.name} made by ${themeFile.author}`, "color:red");
                     }
@@ -63,9 +63,9 @@ export function createSettingsWindow(): void {
                 }
             });
         });
-        settingsWindow.webContents.setWindowOpenHandler(({url}) => {
+        settingsWindow.webContents.setWindowOpenHandler(({ url }) => {
             shell.openExternal(url);
-            return {action: "deny"};
+            return { action: "deny" };
         });
         settingsLoadPage();
         settingsWindow.on("close", () => {

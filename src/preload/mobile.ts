@@ -1,4 +1,4 @@
-import {addStyle} from "../utils";
+import { addStyle } from "../utils";
 import * as fs from "fs";
 import * as path from "path";
 export function injectMobileStuff(): void {

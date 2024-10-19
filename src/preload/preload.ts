@@ -1,13 +1,13 @@
 import "./bridge";
 import "./optimizer";
 import "./settings";
-import {ipcRenderer} from "electron";
+import { ipcRenderer } from "electron";
 import * as fs from "fs";
 import * as path from "path";
-import {addScript, addStyle, sleep} from "../utils";
-import {injectMobileStuff} from "./mobile";
-import {fixTitlebar, injectTitlebar} from "./titlebar";
-import {injectSettings} from "./settings";
+import { addScript, addStyle, sleep } from "../utils";
+import { injectMobileStuff } from "./mobile";
+import { fixTitlebar, injectTitlebar } from "./titlebar";
+import { injectSettings } from "./settings";
 
 window.localStorage.setItem("hideNag", "true");
 
@@ -96,7 +96,7 @@ setInterval(() => {
     let advanced = document
         .querySelector('[class*="socialLinks"]')
         ?.parentElement?.querySelector(
-            '[class*="header"] + [class*="item"] + [class*="item"] + [class*="item"] + [class*="item"] + [class*="item"] + [class*="item"] + [class*="item"] + [class*="item"] + [class*="item"]'
+            '[class*="header"] + [class*="item"] + [class*="item"] + [class*="item"] + [class*="item"] + [class*="item"] + [class*="item"] + [class*="item"] + [class*="item"] + [class*="item"]',
         );
     if (!advanced) return;
     if (advanced.nextSibling instanceof Element && advanced.nextSibling.className.includes("item")) {

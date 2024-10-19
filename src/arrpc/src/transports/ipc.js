@@ -1,11 +1,11 @@
 const rgb = (r, g, b, msg) => `\x1b[38;2;${r};${g};${b}m${msg}\x1b[0m`;
 const log = (...args) => console.log(`[${rgb(88, 101, 242, "arRPC")} > ${rgb(254, 231, 92, "ipc")}]`, ...args);
 
-const {join} = require("path");
-const {platform, env} = require("process");
-const {unlinkSync} = require("fs");
+const { join } = require("path");
+const { platform, env } = require("process");
+const { unlinkSync } = require("fs");
 
-const {createServer, createConnection} = require("net");
+const { createServer, createConnection } = require("net");
 
 const SOCKET_PATH =
     platform === "win32"
@@ -19,14 +19,14 @@ const Types = {
     FRAME: 1,
     CLOSE: 2,
     PING: 3,
-    PONG: 4
+    PONG: 4,
 };
 
 const CloseCodes = {
     // codes for closures
     CLOSE_NORMAL: 1000,
     CLOSE_UNSUPPORTED: 1003,
-    CLOSE_ABNORMAL: 1006
+    CLOSE_ABNORMAL: 1006,
 };
 
 const ErrorCodes = {
@@ -36,7 +36,7 @@ const ErrorCodes = {
     RATELIMITED: 4002,
     TOKEN_REVOKED: 4003,
     INVALID_VERSION: 4004,
-    INVALID_ENCODING: 4005
+    INVALID_ENCODING: 4005,
 };
 
 let uniqueId = 0;
@@ -111,8 +111,8 @@ const socketIsAvailable = async (socket) => {
             socket.end(
                 encode(Types.CLOSE, {
                     code: CloseCodes.CLOSE_UNSUPPORTED,
-                    message: e.message
-                })
+                    message: e.message,
+                }),
             );
             socket.destroy();
         }
@@ -128,10 +128,10 @@ const socketIsAvailable = async (socket) => {
     const possibleOutcomes = Promise.race([
         new Promise((res) => socket.on("error", res)), // errored
         new Promise((res, rej) => socket.on("pong", () => rej("socket ponged"))), // ponged
-        new Promise((res, rej) => setTimeout(() => rej("timed out"), 1000)) // timed out
+        new Promise((res, rej) => setTimeout(() => rej("timed out"), 1000)), // timed out
     ]).then(
         () => true,
-        (e) => e
+        (e) => e,
     );
 
     socket.write(encode(Types.PING, ++uniqueId));
@@ -202,8 +202,8 @@ class IPCServer {
                 socket.end(
                     encode(Types.CLOSE, {
                         code: CloseCodes.CLOSE_UNSUPPORTED,
-                        message: e.message
-                    })
+                        message: e.message,
+                    }),
                 );
                 socket.destroy();
             }
@@ -220,8 +220,8 @@ class IPCServer {
                 socket.end(
                     encode(Types.CLOSE, {
                         code,
-                        message
-                    })
+                        message,
+                    }),
                 );
                 socket.destroy();
             };

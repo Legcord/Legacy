@@ -1,5 +1,5 @@
-import {contextBridge, ipcRenderer} from "electron";
-import {injectTitlebar} from "../preload/titlebar";
+import { contextBridge, ipcRenderer } from "electron";
+import { injectTitlebar } from "../preload/titlebar";
 injectTitlebar();
 contextBridge.exposeInMainWorld("legcordinternal", {
     restart: () => ipcRenderer.send("restart"),
@@ -8,5 +8,5 @@ contextBridge.exposeInMainWorld("legcordinternal", {
     getLang: (toGet: string) =>
         ipcRenderer.invoke("getLang", toGet).then((result) => {
             return result;
-        })
+        }),
 });

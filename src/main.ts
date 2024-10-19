@@ -1,5 +1,5 @@
 // Modules to control application life and create native browser window
-import {BrowserWindow, app, crashReporter, session} from "electron";
+import { BrowserWindow, app, crashReporter, session } from "electron";
 import "v8-compile-cache";
 import {
     Settings,
@@ -12,16 +12,16 @@ import {
     injectElectronFlags,
     installModLoader,
     setConfig,
-    setLang
+    setLang,
 } from "./utils";
 import "./extensions/mods";
 import "./tray";
-import {createCustomWindow, createNativeWindow, createTransparentWindow} from "./window";
+import { createCustomWindow, createNativeWindow, createTransparentWindow } from "./window";
 import path from "path";
-import {createTManagerWindow} from "./themeManager/main";
-import {createSplashWindow} from "./splash/main";
-import {createSetupWindow} from "./setup/main";
-import {createKeybindWindow} from "./keybindMaker/main";
+import { createTManagerWindow } from "./themeManager/main";
+import { createSplashWindow } from "./splash/main";
+import { createSetupWindow } from "./setup/main";
+import { createKeybindWindow } from "./keybindMaker/main";
 export let iconPath: string;
 export let settings: any;
 export let customTitlebar: boolean;
@@ -61,7 +61,7 @@ if (!app.requestSingleInstanceLock() && getConfigSync("multiInstance") == (false
 } else {
     app.commandLine.appendSwitch("disable-features", "WidgetLayering"); // fix dev tools layers
     // Your data now belongs to CCP
-    crashReporter.start({uploadToServer: false});
+    crashReporter.start({ uploadToServer: false });
     // enable pulseaudio audio sharing on linux
     if (process.platform === "linux") {
         app.commandLine.appendSwitch("enable-features", "PulseaudioLoopbackForScreenShare");
@@ -78,7 +78,7 @@ if (!app.requestSingleInstanceLock() && getConfigSync("multiInstance") == (false
     // HardwareMediaKeyHandling,MediaSessionService: Prevent Discord from registering as a media service.
     app.commandLine.appendSwitch(
         "disable-features",
-        "WinRetrieveSuggestionsOnlyOnDemand,HardwareMediaKeyHandling,MediaSessionService"
+        "WinRetrieveSuggestionsOnlyOnDemand,HardwareMediaKeyHandling,MediaSessionService",
     );
     checkForDataFolder();
     checkIfConfigExists();
