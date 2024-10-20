@@ -1,94 +1,15 @@
-import {BrowserWindow, app, dialog, ipcMain, shell} from "electron";
-import {sleep} from "../utils";
-import path from "path";
-import fs from "fs";
-import {createInviteWindow, mainWindow} from "../window";
+import fs from "node:fs";
+import path from "node:path";
+import {BrowserWindow, type MessageBoxOptions, app, dialog, ipcMain, shell} from "electron";
+import {createInviteWindow, mainWindow} from "../window.js";
+import {setThemeEnabled, ThemeManifest, uninstallTheme, installTheme} from "./themes.js";
+
 let themeWindow: BrowserWindow;
 let instance = 0;
-interface ThemeManifest {
-    name?: string;
-    author?: string;
-    description?: string;
-    version?: string;
-    invite?: string;
-    authorId?: string;
-    theme: string;
-    authorLink?: string;
-    donate?: string;
-    patreon?: string;
-    website?: string;
-    source?: string;
-    updateSrc?: string;
-    supportsLegcordTitlebar?: boolean;
-}
-function parseBDManifest(content: string) {
-    const metaReg = /@([^ ]*) (.*)/g;
-    if (!content.startsWith("/**")) {
-        throw new Error("Not a manifest.");
-    }
-    let manifest: ThemeManifest = {theme: "src.css"};
 
-    let match;
-    while ((match = metaReg.exec(content)) !== null) {
-        let [_, key, value] = match;
-        if (key === "import") break;
-
-        value = value.trim();
-
-        //console.log(key, value);
-
-        switch (key) {
-            case "name":
-                manifest.name = value;
-                break;
-
-            case "description":
-                manifest.description = value;
-                break;
-
-            case "version":
-                manifest.version = value;
-                break;
-
-            case "author":
-                manifest.author = value;
-                break;
-
-            case "invite":
-                manifest.invite = value;
-                break;
-
-            case "authorId":
-                manifest.authorId = value;
-                break;
-
-            case "authorLink":
-                manifest.authorLink = value;
-                break;
-
-            case "donate":
-                manifest.donate = value;
-                break;
-
-            case "patreon":
-                manifest.patreon = value;
-                break;
-
-            case "website":
-                manifest.website = value;
-                break;
-
-            case "source":
-                manifest.source = value;
-                break;
-        }
-    }
-
-    return manifest;
-}
 const userDataPath = app.getPath("userData");
 const themesPath = path.join(userDataPath, "/themes/");
-export function createTManagerWindow(): void {
+export async function createTManagerWindow(): Promise<void> {
     console.log("Creating theme manager window.");
     instance += 1;
     if (instance > 1) {
@@ -100,32 +21,29 @@ export function createTManagerWindow(): void {
         themeWindow = new BrowserWindow({
             width: 700,
             height: 600,
-            title: `Legcord Theme Manager`,
+            title: "Legcord Theme Manager",
             darkTheme: true,
             frame: true,
             backgroundColor: "#2f3136",
             autoHideMenuBar: true,
             webPreferences: {
                 sandbox: false,
-                preload: path.join(__dirname, "preload.js")
+                preload: path.join(__dirname, "themeManager", "preload.mjs")
             }
         });
         //setWindowHandler doesn't work for some reason
-        themeWindow.webContents.on("will-navigate", function (e, url) {
+        themeWindow.webContents.on("will-navigate", (e, url) => {
             /* If url isn't the actual page */
-            if (url != themeWindow.webContents.getURL()) {
+            if (url !== themeWindow.webContents.getURL()) {
                 e.preventDefault();
                 if (url.startsWith("https://discord.gg/")) {
                     createInviteWindow(url.replace("https://discord.gg/", ""));
                 } else {
-                    shell.openExternal(url);
+                    void shell.openExternal(url);
                 }
             }
         });
 
-        async function managerLoadPage(): Promise<void> {
-            themeWindow.loadFile(`${__dirname}/manager.html`);
-        }
         const userDataPath = app.getPath("userData");
         const themesFolder = `${userDataPath}/themes/`;
         if (!fs.existsSync(themesFolder)) {
@@ -135,78 +53,80 @@ export function createTManagerWindow(): void {
         if (!fs.existsSync(`${userDataPath}/disabled.txt`)) {
             fs.writeFileSync(path.join(userDataPath, "/disabled.txt"), "");
         }
-        ipcMain.on("openThemesFolder", async () => {
+        ipcMain.on("openThemesFolder", () => {
             shell.showItemInFolder(themesPath);
-            await sleep(1000);
         });
-        ipcMain.on("reloadMain", async () => {
-            mainWindow.webContents.reload();
+        ipcMain.on("setThemeEnabled", (_event, name: string, enabled: boolean) => {
+            setThemeEnabled(name, enabled);
         });
-        ipcMain.on("addToDisabled", async (_event, name: string) => {
-            fs.appendFileSync(path.join(userDataPath, "/disabled.txt"), `${name}\n`);
-            sleep(1000);
+        ipcMain.on("editTheme", (_event, id: string) => {
+            const manifest = JSON.parse(
+                fs.readFileSync(`${themesFolder}/${id}/manifest.json`, "utf8")
+            ) as ThemeManifest;
+            void shell.openPath(`${themesFolder}/${id}/${manifest.theme}`);
         });
-        ipcMain.on("disabled", async (e) => {
-            e.returnValue = fs.readFileSync(path.join(userDataPath, "/disabled.txt")).toString();
+        ipcMain.on("openThemeFolder", (_event, id: string) => {
+            void shell.openPath(path.join(themesFolder, id));
         });
-        ipcMain.on("removeFromDisabled", async (_event, name: string) => {
-            let e = await fs.readFileSync(path.join(userDataPath, "/disabled.txt")).toString();
-            fs.writeFileSync(path.join(userDataPath, "/disabled.txt"), e.replace(name, ""));
-            sleep(1000);
-        });
-        ipcMain.on("uninstallTheme", async (_event, id: string) => {
-            let themePath = path.join(themesFolder, id);
-            if (fs.existsSync(themePath)) {
-                fs.rmdirSync(themePath, {recursive: true});
-                console.log(`Removed ${id} folder`);
-            } else if (fs.existsSync(path.join(themesFolder, `${id}-BD`))) {
-                fs.rmdirSync(path.join(themesFolder, `${id}-BD`), {recursive: true});
-                console.log(`Removed ${id} folder`);
-            }
-            themeWindow.webContents.reload();
-            mainWindow.webContents.reload();
-        });
-        ipcMain.on("installBDTheme", async (_event, link: string) => {
-            try {
-                let code = await (await fetch(link)).text();
-                let manifest = parseBDManifest(code);
-                let themePath = path.join(themesFolder, `${manifest.name?.replace(" ", "-")}-BD`);
-                if (!fs.existsSync(themePath)) {
-                    fs.mkdirSync(themePath);
-                    console.log(`Created ${manifest.name} folder`);
+        ipcMain.on("uninstallTheme", (_event, id: string) => {
+            const options: MessageBoxOptions = {
+                type: "warning",
+                buttons: ["Yes, please", "No, cancel"],
+                defaultId: 1,
+                title: "Remove theme",
+                message: "Are you sure you want to remove this theme?"
+            };
+
+            void dialog.showMessageBox(mainWindow, options).then(({response}) => {
+                if (response === 0) {
+                    uninstallTheme(id);
+                    themeWindow.webContents.reload();
+                    mainWindow.webContents.reload();
                 }
-                manifest.updateSrc = link;
-                if (code.includes(".titlebar")) manifest.supportsLegcordTitlebar = true;
-                else manifest.supportsLegcordTitlebar = false;
-                fs.writeFileSync(path.join(themePath, "manifest.json"), JSON.stringify(manifest));
-                fs.writeFileSync(path.join(themePath, "src.css"), code);
-                dialog.showMessageBoxSync({
-                    type: "info",
-                    title: "BD Theme import success",
-                    message: "Successfully imported theme from link."
+            });
+        });
+        ipcMain.handle("installBDTheme", async (_event, link: string) => {
+            await installTheme(link)
+                .then(() => {
+                    dialog.showMessageBoxSync({
+                        type: "info",
+                        title: "BD Theme import success",
+                        message: "Successfully imported theme from link."
+                    });
+                    themeWindow.webContents.reload();
+
+                    mainWindow.webContents.reload();
+                })
+                .catch((err) => {
+                    dialog.showErrorBox(
+                        "BD Theme import fail",
+                        "Failed to import theme from link. Please make sure that it's a valid BetterDiscord Theme."
+                    );
+                    console.error(err);
                 });
-                themeWindow.webContents.reload();
-                mainWindow.webContents.reload();
-            } catch (e) {
-                dialog.showErrorBox(
-                    "BD Theme import fail",
-                    "Failed to import theme from link. Please make sure that it's a valid BetterDiscord Theme."
-                );
-            }
         });
         themeWindow.webContents.on("did-finish-load", () => {
             fs.readdirSync(themesFolder).forEach((file) => {
                 try {
-                    const manifest = fs.readFileSync(`${themesFolder}/${file}/manifest.json`, "utf8");
+                    const manifest = JSON.parse(
+                        fs.readFileSync(`${themesFolder}/${file}/manifest.json`, "utf8")
+                    ) as ThemeManifest;
                     console.log(manifest);
-                    themeWindow.webContents.send("themeManifest", manifest);
+                    if (manifest.enabled === undefined) {
+                        if (fs.readFileSync(`${userDataPath}/disabled.txt`).toString().includes(file)) {
+                            manifest.enabled = false;
+                        } else {
+                            manifest.enabled = true;
+                        }
+                    }
+                    themeWindow.webContents.send("themeManifest", file, JSON.stringify(manifest));
                 } catch (err) {
                     console.error(err);
                 }
             });
         });
 
-        managerLoadPage();
+        await themeWindow.loadFile(`${__dirname}/html/manager.html`);
         themeWindow.on("close", () => {
             instance = 0;
         });

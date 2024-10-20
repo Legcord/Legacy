@@ -2,10 +2,11 @@ import * as fs from "fs";
 import {app, dialog, globalShortcut} from "electron";
 import path from "path";
 import fetch from "cross-fetch";
-import extract from "extract-zip";
-import util from "util";
-const streamPipeline = util.promisify(require("stream").pipeline);
-export let firstRun: boolean;
+import {Settings} from "./@types/settings";
+import {runAction} from "./keybindActions";
+import {setMenu} from "./menu";
+import {Keybind} from "./@types/keybind";
+
 export let contentPath: string;
 export let transparency: boolean;
 //utility functions that are used all over the codebase or just too obscure to be put in the file used in
@@ -59,22 +60,25 @@ export function setup(): void {
         minimizeToTray: true,
         keybinds: [],
         multiInstance: false,
-        mods: "none",
+        mods: [],
         spellcheck: true,
         performanceMode: "none",
         skipSplash: false,
         inviteWebsocket: true,
         startMinimized: false,
-        dynamicIcon: false,
+        legacyDynamicIcon: false,
         tray: true,
         customJsBundle: "https://legcord.app/placeholder.js",
         customCssBundle: "https://legcord.app/placeholder.css",
         disableAutogain: false,
         mobileMode: false,
         trayIcon: "default",
-        doneSetup: false,
         clientName: "Legcord",
-        customIcon: path.join(__dirname, "../", "/assets/desktop.png")
+        customIcon: path.join(__dirname, "../", "/assets/desktop.png"),
+        hardwareAcceleration: true,
+        disableHttpCache: false,
+        smoothScroll: false,
+        autoScroll: false
     };
     setConfigBulk({
         ...defaults
@@ -238,6 +242,32 @@ export async function getWindowState<K extends keyof WindowState>(object: K): Pr
     console.log(`[Window state manager] ${returndata}`);
     return returndata[object];
 }
+
+export function getRawLang() {
+    if (language === undefined) {
+        try {
+            const userDataPath = app.getPath("userData");
+            const storagePath = path.join(userDataPath, "/storage/");
+            const langConfigFile = `${storagePath}lang.json`;
+            const rawData = fs.readFileSync(langConfigFile, "utf-8");
+            const parsed = JSON.parse(rawData);
+            language = parsed.lang;
+        } catch (_e) {
+            console.log("Language config file doesn't exist. Fallback to English.");
+            language = "en-US";
+        }
+    }
+    if (language.length === 2) {
+        language = `${language}-${language.toUpperCase()}`;
+    }
+    let langPath = path.join(__dirname, "../", `/assets/lang/${language}.json`);
+    if (!fs.existsSync(langPath)) {
+        langPath = path.join(__dirname, "../", "/assets/lang/en-US.json");
+    }
+    const rawData = fs.readFileSync(langPath, "utf-8");
+    const parsed = JSON.parse(rawData);
+    return parsed;
+}
 //Legcord Settings/Storage manager
 
 export function checkForDataFolder(): void {
@@ -248,36 +278,6 @@ export function checkForDataFolder(): void {
     }
 }
 
-export interface Settings {
-    // Referenced for detecting a broken config.
-    "0"?: string;
-    // Referenced once for disabling mod updating.
-    noBundleUpdates?: boolean;
-    // Only used for external url warning dialog.
-    ignoreProtocolWarning?: boolean;
-    customIcon: string;
-    windowStyle: string;
-    channel: string;
-    legcordCSP: boolean;
-    minimizeToTray: boolean;
-    multiInstance: boolean;
-    spellcheck: boolean;
-    mods: string;
-    dynamicIcon: boolean;
-    mobileMode: boolean;
-    skipSplash: boolean;
-    performanceMode: string;
-    customJsBundle: RequestInfo | URL;
-    customCssBundle: RequestInfo | URL;
-    startMinimized: boolean;
-    tray: boolean;
-    keybinds: Array<string>;
-    inviteWebsocket: boolean;
-    disableAutogain: boolean;
-    trayIcon: string;
-    doneSetup: boolean;
-    clientName: string;
-}
 export function getConfigLocation(): string {
     const userDataPath = app.getPath("userData");
     const storagePath = path.join(userDataPath, "/storage/");
@@ -326,59 +326,10 @@ export async function checkIfConfigExists(): Promise<void> {
             fs.mkdirSync(storagePath);
             console.log("Created missing storage folder");
         }
-        console.log("First run of the Legcord. Starting setup.");
+        console.log("First run of the Legcord. Starting using default settings.");
         setup();
-        firstRun = true;
-    } else if ((await getConfig("doneSetup")) == false) {
-        console.log("First run of the Legcord. Starting setup.");
-        setup();
-        firstRun = true;
     } else {
-        console.log("Legcord has been run before. Skipping setup.");
-    }
-}
-
-// Mods
-async function updateModBundle(): Promise<void> {
-    if ((await getConfig("noBundleUpdates")) == undefined ?? false) {
-        try {
-            console.log("Downloading mod bundle");
-            const distFolder = `${app.getPath("userData")}/plugins/loader/dist/`;
-            while (!fs.existsSync(distFolder)) {
-                //waiting
-            }
-            let name: string = await getConfig("mods");
-            if (name == "custom") {
-                // aspy fix
-                let bundle: string = await (await fetch(await getConfig("customJsBundle"))).text();
-                fs.writeFileSync(`${distFolder}bundle.js`, bundle, "utf-8");
-                let css: string = await (await fetch(await getConfig("customCssBundle"))).text();
-                fs.writeFileSync(`${distFolder}bundle.css`, css, "utf-8");
-            } else {
-                const clientMods = {
-                    vencord: "https://github.com/Vendicated/Vencord/releases/download/devbuild/browser.js",
-                    shelter: "https://raw.githubusercontent.com/uwu/shelter-builds/main/shelter.js"
-                };
-                const clientModsCss = {
-                    vencord: "https://github.com/Vendicated/Vencord/releases/download/devbuild/browser.css",
-                    shelter: "https://legcord.app/placeholder.css"
-                };
-                console.log(clientMods[name as keyof typeof clientMods]);
-                let bundle: string = await (await fetch(clientMods[name as keyof typeof clientMods])).text();
-                fs.writeFileSync(`${distFolder}bundle.js`, bundle, "utf-8");
-                let css: string = await (await fetch(clientModsCss[name as keyof typeof clientModsCss])).text();
-                fs.writeFileSync(`${distFolder}bundle.css`, css, "utf-8");
-            }
-        } catch (e) {
-            console.log("[Mod loader] Failed to install mods");
-            console.error(e);
-            dialog.showErrorBox(
-                "Oops, something went wrong.",
-                "Legcord couldn't install mods, please check if you have stable internet connection and restart the app. If this issue persists, report it on the support server/Github issues."
-            );
-        }
-    } else {
-        console.log("[Mod loader] Skipping mod bundle update");
+        console.log("Legcord has been run before.");
     }
 }
 
@@ -386,82 +337,36 @@ export let modInstallState: string;
 export function updateModInstallState() {
     modInstallState = "modDownload";
 
-    updateModBundle();
     import("./extensions/plugin");
 
     modInstallState = "done";
 }
 
-export async function installModLoader(): Promise<void> {
-    if ((await getConfig("mods")) == "none") {
-        modInstallState = "none";
-        fs.rmSync(`${app.getPath("userData")}/plugins/loader`, {recursive: true, force: true});
-
-        import("./extensions/plugin");
-        console.log("[Mod loader] Skipping");
-
-        return;
-    }
-
-    const pluginFolder = `${app.getPath("userData")}/plugins/`;
-    if (fs.existsSync(`${pluginFolder}loader`) && fs.existsSync(`${pluginFolder}loader/dist/bundle.css`)) {
-        updateModInstallState();
-        return;
-    }
-
-    try {
-        fs.rmSync(`${app.getPath("userData")}/plugins/loader`, {recursive: true, force: true});
-        modInstallState = "installing";
-
-        let zipPath = `${app.getPath("temp")}/loader.zip`;
-
-        if (!fs.existsSync(pluginFolder)) {
-            fs.mkdirSync(pluginFolder);
-            console.log("[Mod loader] Created missing plugin folder");
-        }
-
-        // Add more of these later if needed!
-        let URLs = [
-            "https://legcord.app/loader.zip",
-            "https://legcord.vercel.app/loader.zip",
-            "https://raw.githubusercontent.com/Legcord/website/new/public/loader.zip"
-        ];
-        let loaderZip: any;
-
-        while (true) {
-            if (URLs.length <= 0) throw new Error(`unexpected response ${loaderZip.statusText}`);
-
-            try {
-                loaderZip = await fetch(URLs[0]);
-            } catch (err) {
-                console.log("[Mod loader] Failed to download. Links left to try: " + (URLs.length - 1));
-                URLs.splice(0, 1);
-
-                continue;
-            }
-
-            break;
-        }
-
-        await streamPipeline(loaderZip.body, fs.createWriteStream(zipPath));
-        await extract(zipPath, {dir: path.join(app.getPath("userData"), "plugins")});
-
-        updateModInstallState();
-    } catch (e) {
-        console.log("[Mod loader] Failed to install modloader");
-        console.error(e);
-        dialog.showErrorBox(
-            "Oops, something went wrong.",
-            "Legcord couldn't install internal mod loader, please check if you have stable internet connection and restart the app. If this issue persists, report it on the support server/Github issues."
-        );
-    }
+export function addTheme(id: string, styleString: string): void {
+    const style = document.createElement("style");
+    style.textContent = styleString;
+    style.id = id;
+    document.head.append(style);
 }
-
-export async function registerGlobalKeybinds(): Promise<void> {
-    const keybinds = await getConfig("keybinds");
-    keybinds.forEach((keybind) => {
-        globalShortcut.register(keybind, () => {
-            console.log(keybind);
-        });
+export async function registerGlobalKeybinds() {
+    const keybinds = getConfig("keybinds");
+    (await keybinds).forEach((keybind: Keybind) => {
+        if (keybind.enabled && keybind.global) {
+            globalShortcut.register(keybind.accelerator, () => {
+                runAction(keybind);
+            });
+        }
     });
+}
+app.on("will-quit", () => {
+    try {
+        globalShortcut.unregisterAll();
+    } catch (e) {}
+});
+
+export function refreshGlobalKeybinds() {
+    console.log("[Keybind Manager] Refreshing keybinds");
+    globalShortcut.unregisterAll();
+    registerGlobalKeybinds();
+    setMenu();
 }

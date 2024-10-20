@@ -4,15 +4,7 @@
 // I'm sorry for this mess but I'm not sure how to fix it.
 import {BrowserWindow, MessageBoxOptions, app, dialog, nativeImage, shell} from "electron";
 import path from "path";
-import {
-    contentPath,
-    firstRun,
-    getConfig,
-    getWindowState,
-    registerGlobalKeybinds,
-    setConfig,
-    setWindowState
-} from "./utils";
+import {contentPath, getConfig, getWindowState, registerGlobalKeybinds, setConfig, setWindowState} from "./utils";
 import {registerIpc} from "./ipc";
 import {setMenu} from "./menu";
 import * as fs from "fs";
@@ -55,7 +47,7 @@ async function doAfterDefiningTheWindow(): Promise<void> {
         mainWindow.webContents.executeJavaScript(`document.body.setAttribute("isMaximized", "");`);
         mainWindow.hide(); // please don't flashbang the user
     }
-    if ((await getConfig("windowStyle")) == "transparency" && process.platform === "win32") {
+    if ((await getConfig("windowStyle")) == "transparent" && process.platform === "win32") {
         //mainWindow.setBackgroundMaterial("mica");
         if ((await getConfig("startMinimized")) == false) {
             mainWindow.show();
@@ -140,9 +132,8 @@ async function doAfterDefiningTheWindow(): Promise<void> {
         (_, callback) => callback({cancel: true})
     );
 
-    if ((await getConfig("trayIcon")) == "default" || (await getConfig("dynamicIcon"))) {
-        mainWindow.webContents.on("page-favicon-updated", async () => {
-            let faviconBase64 = await mainWindow.webContents.executeJavaScript(`
+    mainWindow.webContents.on("page-favicon-updated", async () => {
+        let faviconBase64 = await mainWindow.webContents.executeJavaScript(`
                 var getFavicon = function(){
                 var favicon = undefined;
                 var nodeList = document.getElementsByTagName("link");
@@ -157,28 +148,23 @@ async function doAfterDefiningTheWindow(): Promise<void> {
                 }
                 getFavicon()
             `);
-            let buf = Buffer.from(faviconBase64.replace(/^data:image\/\w+;base64,/, ""), "base64");
-            fs.writeFileSync(path.join(app.getPath("temp"), "/", "tray.png"), buf, "utf-8");
-            let trayPath = nativeImage.createFromPath(path.join(app.getPath("temp"), "/", "tray.png"));
-            if (process.platform === "darwin" && trayPath.getSize().height > 22)
-                trayPath = trayPath.resize({height: 22});
-            if (process.platform === "win32" && trayPath.getSize().height > 32)
-                trayPath = trayPath.resize({height: 32});
-            if (await getConfig("tray")) {
-                if ((await getConfig("trayIcon")) == "default") {
-                    tray.setImage(trayPath);
-                }
-            }
-            if (await getConfig("dynamicIcon")) {
-                mainWindow.setIcon(trayPath);
-            }
-        });
-    }
+        let buf = Buffer.from(faviconBase64.replace(/^data:image\/\w+;base64,/, ""), "base64");
+        fs.writeFileSync(path.join(app.getPath("temp"), "/", "tray.png"), buf, "utf-8");
+        let trayPath = nativeImage.createFromPath(path.join(app.getPath("temp"), "/", "tray.png"));
+        if (process.platform === "darwin" && trayPath.getSize().height > 22) trayPath = trayPath.resize({height: 22});
+        if (process.platform === "win32" && trayPath.getSize().height > 32) trayPath = trayPath.resize({height: 32});
+        if ((await getConfig("trayIcon")) == "dynamic") {
+            tray.setImage(trayPath);
+        }
+        if (await getConfig("legacyDynamicIcon")) {
+            mainWindow.setIcon(trayPath);
+        }
+    });
     mainWindow.webContents.on("page-title-updated", async (e, title) => {
         const armCordSuffix = " - Legcord"; /* identify */
 
         // FIXME - This is a bit of a mess. I'm not sure how to clean it up.
-        if (process.platform === "win32" && !(await getConfig("dynamicIcon"))) {
+        if (process.platform === "win32" && (await getConfig("legacyDynamicIcon")) === false) {
             if (title.startsWith("•"))
                 return mainWindow.setOverlayIcon(
                     nativeImage.createFromPath(path.join(__dirname, "../", "/assets/badge-11.ico")),
@@ -295,11 +281,19 @@ async function doAfterDefiningTheWindow(): Promise<void> {
         require("arrpc");
         //await startServer();
     }
-    if (firstRun) {
-        mainWindow.close();
+    switch (await getConfig("channel")) {
+        case "stable":
+            mainWindow.loadURL("https://discord.com/app");
+            break;
+        case "canary":
+            mainWindow.loadURL("https://canary.discord.com/app");
+            break;
+        case "ptb":
+            mainWindow.loadURL("https://ptb.discord.com/app");
+            break;
+        default:
+            window.location.replace("https://discord.com/app");
     }
-    //loadURL broke for no good reason after E28
-    mainWindow.loadFile(`${__dirname}/splash/redirect.html`);
 
     if (await getConfig("skipSplash")) {
         mainWindow.show();
@@ -319,7 +313,6 @@ export async function createCustomWindow(): Promise<void> {
         backgroundColor: "#202225",
         autoHideMenuBar: true,
         webPreferences: {
-            webviewTag: true,
             sandbox: false,
             preload: path.join(__dirname, "preload/preload.js"),
             spellcheck: await getConfig("spellcheck")
@@ -341,7 +334,6 @@ export async function createNativeWindow(): Promise<void> {
         backgroundColor: "#202225",
         autoHideMenuBar: true,
         webPreferences: {
-            webviewTag: true,
             sandbox: false,
             preload: path.join(__dirname, "preload/preload.js"),
             spellcheck: await getConfig("spellcheck")
@@ -358,13 +350,13 @@ export async function createTransparentWindow(): Promise<void> {
         title: "Legcord",
         darkTheme: true,
         icon: iconPath,
-        frame: true,
+        frame: false,
+        transparent: true,
         backgroundColor: "#00000000",
         show: false,
         autoHideMenuBar: true,
         webPreferences: {
             sandbox: false,
-            webviewTag: true,
             preload: path.join(__dirname, "preload/preload.js"),
             spellcheck: await getConfig("spellcheck")
         }

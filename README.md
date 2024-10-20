@@ -1,5 +1,5 @@
-# Legcord Legacy
-Legcord is a custom client designed to enhance your Discord experience while keeping everything lightweight.
+# Legacycord
+Discord client for Windows 7 and Mac OS X, loosely based on old Legcord codebase. 
 
 These builds are based on severally outdated Electron versions, only use this if you can't apply [VxKex](https://github.com/vxiiduu/VxKex/) on Windows or [OCLP](https://dortania.github.io/OpenCore-Legacy-Patcher/) on macOS.    
 
@@ -14,6 +14,8 @@ Runs Electron 22
 Runs Electron 27
 ### [Download]()
 
-# macOS 10.11/10.12
+# OS X 10.11/10.12
 Runs Electron 20
 ### [Download]()
+
+Discord is trademark of Discord Inc. Legacycord is not affiliated with or endorsed by Discord Inc.

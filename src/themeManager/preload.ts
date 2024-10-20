@@ -1,15 +1,16 @@
-import {ipcRenderer, contextBridge} from "electron";
-import {sleep} from "../utils";
+import {contextBridge, ipcRenderer} from "electron";
+import {ThemeManifest} from "./themes";
+
 contextBridge.exposeInMainWorld("themes", {
-    install: (url: string) => ipcRenderer.send("installBDTheme", url),
-    uninstall: (id: string) => ipcRenderer.send("uninstallTheme", id)
+    install: async (url: string) => ipcRenderer.invoke("installBDTheme", url) as Promise<null>,
+    uninstall: (id: string) => ipcRenderer.send("uninstallTheme", id),
+    edit: (id: string) => ipcRenderer.send("editTheme", id),
+    folder: (id: string) => ipcRenderer.send("openThemeFolder", id)
 });
-ipcRenderer.on("themeManifest", (_event, json) => {
-    let manifest = JSON.parse(json);
+ipcRenderer.on("themeManifest", (_event, id: string, json: string) => {
+    const manifest = JSON.parse(json) as ThemeManifest;
     console.log(manifest);
-    sleep(1000);
-    let e = document.getElementById("cardBox");
-    let id = manifest.name.replace(" ", "-");
+    const e = document.getElementById("cardBox");
     e?.insertAdjacentHTML(
         "beforeend",
         `
@@ -20,9 +21,17 @@ ipcRenderer.on("themeManifest", (_event, json) => {
                 <label class="tgl-btn left" for="${id}"></label>
             </div>
             <p>${manifest.description}</p>
+            <div id="${id}-shortcuts"></div>
         </div>
         `
     );
+    document.getElementById(
+        `${id}-shortcuts`
+    )!.innerHTML += `<img class="themeInfoIcon" id="${id}-removeTheme" onclick="themes.uninstall('${id}')" title="Remove the theme" src="legcord://assets/Trash.png"></img>
+                           <img class="themeInfoIcon" id="${id}-updateTheme" onclick="themes.install('${manifest.updateSrc}')" title="Update your theme" src="legcord://assets/UpgradeArrow.png"></img>
+                           <img class="themeInfoIcon" id="${id}-editTheme" onclick="themes.edit('${id}')" title="Edit your theme" src="legcord://assets/Edit.png"></img>
+                           <img class="themeInfoIcon" id="${id}-folderTheme" onclick="themes.folder('${id}')" title="Open this theme folder" src="legcord://assets/Folder.png"></img>`;
+    (document.getElementById(id) as HTMLInputElement).checked = manifest.enabled;
     document.getElementById(`${id}header`)!.addEventListener("click", () => {
         document.getElementById("themeInfoModal")!.style.display = "block";
         document.getElementById("themeInfoName")!.textContent = `${manifest.name} by ${manifest.author}`;
@@ -30,41 +39,29 @@ ipcRenderer.on("themeManifest", (_event, json) => {
         if (manifest.supportsLegcordTitlebar !== undefined) {
             document.getElementById(
                 "themeInfoButtons"
-            )!.innerHTML += `<img class="themeInfoIcon" id="removeTheme" onclick="themes.uninstall('${id}')" title="Remove the theme" src="https://raw.githubusercontent.com/Legcord/BrandingStuff/main/Trash.png"></img>
-                           <img class="themeInfoIcon" id="updateTheme" onclick="themes.install('${manifest.updateSrc}')" title="Update your theme" src="https://raw.githubusercontent.com/Legcord/BrandingStuff/main/UpgradeArrow.png"></img>
-                           <img class="themeInfoIcon" id="compatibility" title="Supports Legcord Titlebar" src=""></img>`;
-            console.log("e");
-            if (manifest.supportsLegcordTitlebar == true) {
-                (document.getElementById(`compatibility`) as HTMLImageElement).src =
-                    "https://raw.githubusercontent.com/Legcord/BrandingStuff/main/Window.png";
+            )!.innerHTML += `<img class="themeInfoIcon" id="compatibility" title="Supports Legcord Titlebar" src=""></img>`;
+            if (manifest.supportsLegcordTitlebar === true) {
+                (document.getElementById("compatibility") as HTMLImageElement).src = "legcord://assets/Window.png";
             } else {
-                (document.getElementById(`compatibility`) as HTMLImageElement).src =
-                    "https://raw.githubusercontent.com/Legcord/BrandingStuff/main/WindowUnsupported.png";
+                (document.getElementById("compatibility") as HTMLImageElement).src =
+                    "legcord://assets/WindowUnsupported.png";
             }
         }
-        if (manifest.source != undefined)
+        if (manifest.source !== undefined)
             document.getElementById(
                 "themeInfoButtons"
             )!.innerHTML += `<a href="${manifest.source}" class="button">Source code</a>`;
-        if (manifest.website != undefined)
+        if (manifest.website !== undefined)
             document.getElementById(
                 "themeInfoButtons"
             )!.innerHTML += `<a href="${manifest.website}" class="button">Website</a>`;
-        if (manifest.invite != undefined)
+        if (manifest.invite !== undefined)
             document.getElementById(
                 "themeInfoButtons"
             )!.innerHTML += `<a href="${`https://discord.gg/${manifest.invite}`}" class="button">Support Discord</a>`;
     });
-    if (!ipcRenderer.sendSync("disabled").includes(id)) {
-        (document.getElementById(id) as HTMLInputElement).checked = true;
-    }
-    (document.getElementById(id) as HTMLInputElement)!.addEventListener("input", function (evt) {
-        ipcRenderer.send("reloadMain");
-        if (this.checked) {
-            ipcRenderer.send("removeFromDisabled", id);
-        } else {
-            ipcRenderer.send("addToDisabled", id);
-        }
+    (document.getElementById(id) as HTMLInputElement).addEventListener("input", function () {
+        ipcRenderer.send("setThemeEnabled", id, this.checked);
     });
 });
 document.addEventListener("DOMContentLoaded", () => {
@@ -73,6 +70,30 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("themeInfoButtons")!.innerHTML = "";
     });
     document.getElementById("download")!.addEventListener("click", () => {
-        ipcRenderer.send("installBDTheme", (document.getElementById("themeLink") as HTMLInputElement)!.value);
+        void ipcRenderer.invoke("installBDTheme", (document.getElementById("themeLink") as HTMLInputElement).value);
     });
+    // drag and drop
+    const holder = document.getElementById("dropArea");
+
+    holder!.ondragover = () => {
+        return false;
+    };
+
+    holder!.ondragleave = () => {
+        return false;
+    };
+
+    holder!.ondragend = () => {
+        return false;
+    };
+
+    holder!.ondrop = async (e) => {
+        e.preventDefault();
+        for (const f of e.dataTransfer!.files) {
+            console.log("File you dragged here: ", f.path);
+            await ipcRenderer.invoke("installBDTheme", f.path);
+        }
+
+        return false;
+    };
 });

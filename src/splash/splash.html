@@ -37,18 +37,7 @@
                 text.innerHTML = await internal.getLang("loading_screen_start");
 
                 function check() {
-                    if (internal.installState === "installing") {
-                        text.innerHTML = "Installing mods";
-                    } else if (internal.installState === "done") {
-                        return true;
-                    } else if (internal.installState === "modDownload") {
-                        text.innerHTML = "Updating " + legcord.mods;
-                    } else if (internal.installState === "none") {
-                        text.innerHTML = "Nothing to install.";
-                        return true;
-                    } else {
-                        return true;
-                    }
+                    return true;
                 }
 
                 while (check() === false) await new Promise((r) => setTimeout(r, 10));

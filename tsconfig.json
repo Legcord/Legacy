@@ -1,7 +1,7 @@
 // Reference: https://www.typescriptlang.org/tsconfig
 {
     "include": ["src/**/*"], // This makes it so that the compiler won't compile anything outside of "src".
-    //"exclude": ["src/**/*.test.ts"], // Exclude .test.ts files since they're for Jest only.
+    "exclude": ["src/shelter/**/*"], // Exclude .test.ts files since they're for Jest only.
     "compilerOptions": {
         // Project Structure //
         "rootDir": "src", // rootDir only affects the STRUCTURE of the folders, not what gets compiled. For extra measure, make sure the structure conforms to "src".
@@ -15,7 +15,7 @@
         "forceConsistentCasingInFileNames": true, // Make import paths case-sensitive. "./tEst" is no longer the same as "./test".
         "esModuleInterop": true, // Enables compatibility with Node.js' module system since the entire export can be whatever you want. allowSyntheticDefaultImports doesn't address runtime issues and is made redundant by this setting.
         "resolveJsonModule": true, // Allows you to import JSON files just like how you can require() them. Do note that if you're accessing any JSON files outside of src, it'll mess up dist.
-        "lib": ["ES2020", "DOM"], // Specifies what common libraries you have access to. If you're working in Node.js, you'll want to leave out the DOM library. But do make sure to include "@types/node" because otherwise, variables like "console" won't be defined.
+        "lib": ["ES2020", "DOM", "DOM.Iterable"], // Specifies what common libraries you have access to. If you're working in Node.js, you'll want to leave out the DOM library. But do make sure to include "@types/node" because otherwise, variables like "console" won't be defined.
         "noUnusedLocals": true, // Warns you if you have unused variables.
         // Output //
         "module": "CommonJS", // Compiles ES6 imports to require() syntax.
@@ -29,6 +29,8 @@
         // Web Compatibility //
         "target": "ES2020", // ES2017 supports async/await, reducing the amount of compiled code, especially for async-heavy projects. ES2020 is from the Node 14 base (https://github.com/tsconfig/bases/blob/master/bases/node14.json)
         "downlevelIteration": false, // This flag adds extra support when targeting ES3, but adds extra bloat otherwise.
+        "jsx": "preserve",
+        "jsxImportSource": "solid-js",
         "importHelpers": false // Reduce the amount of bloat that comes from downlevelIteration (when polyfills are redeclared).
     }
 }

@@ -2,26 +2,22 @@
 import {BrowserWindow, app, crashReporter, session} from "electron";
 import "v8-compile-cache";
 import {
-    Settings,
     checkForDataFolder,
     checkIfConfigExists,
-    firstRun,
     checkIfConfigIsBroken,
     getConfig,
     getConfigSync,
     injectElectronFlags,
-    installModLoader,
-    setConfig,
     setLang
 } from "./utils";
-import "./extensions/mods";
+import "./extensions/csp";
+import "./protocol";
 import "./tray";
 import {createCustomWindow, createNativeWindow, createTransparentWindow} from "./window";
 import path from "path";
-import {createTManagerWindow} from "./themeManager/main";
 import {createSplashWindow} from "./splash/main";
-import {createSetupWindow} from "./setup/main";
-import {createKeybindWindow} from "./keybindMaker/main";
+import {fetchMods} from "./extensions/mods";
+
 export let iconPath: string;
 export let settings: any;
 export let customTitlebar: boolean;
@@ -31,30 +27,8 @@ app.on("render-process-gone", (event, webContents, details) => {
         app.relaunch();
     }
 });
-async function args(): Promise<void> {
-    let argNum = 2;
-    if (process.argv[0] == "electron") argNum++;
-    let args = process.argv[argNum];
-    if (args == undefined) return;
-    if (args.startsWith("--")) return; //electron flag
-    if (args.includes("=")) {
-        let e = args.split("=");
-        await setConfig(e[0] as keyof Settings, e[1]);
-        console.log(`Setting ${e[0]} to ${e[1]}`);
-        app.relaunch();
-        app.exit();
-    } else if (args == "themes") {
-        app.whenReady().then(async () => {
-            createTManagerWindow();
-        });
-    } else if (args == "keybinds") {
-        app.whenReady().then(async () => {
-            createKeybindWindow();
-        });
-    }
-}
-args(); // i want my top level awaits
-if (!app.requestSingleInstanceLock() && getConfigSync("multiInstance") == (false ?? undefined)) {
+
+if (!app.requestSingleInstanceLock() && getConfigSync("multiInstance") == false) {
     // if value isn't set after 3.2.4
     // kill if 2nd instance
     app.quit();
@@ -85,7 +59,7 @@ if (!app.requestSingleInstanceLock() && getConfigSync("multiInstance") == (false
     checkIfConfigIsBroken();
     injectElectronFlags();
     app.whenReady().then(async () => {
-        if ((await getConfig("customIcon")) !== undefined ?? null) {
+        if ((await getConfig("customIcon")) !== undefined) {
             iconPath = await getConfig("customIcon");
         } else {
             iconPath = path.join(__dirname, "../", "/assets/desktop.png");
@@ -94,10 +68,7 @@ if (!app.requestSingleInstanceLock() && getConfigSync("multiInstance") == (false
             if ((await getConfig("skipSplash")) == false) {
                 createSplashWindow();
             }
-            if (firstRun == true) {
-                await setLang(new Intl.DateTimeFormat().resolvedOptions().locale);
-                createSetupWindow();
-            }
+            await setLang("en-US");
             switch (await getConfig("windowStyle")) {
                 case "default":
                     createCustomWindow();
@@ -108,6 +79,7 @@ if (!app.requestSingleInstanceLock() && getConfigSync("multiInstance") == (false
                     break;
                 case "transparent":
                     createTransparentWindow();
+                    customTitlebar = true;
                     break;
                 default:
                     createCustomWindow();
@@ -115,8 +87,8 @@ if (!app.requestSingleInstanceLock() && getConfigSync("multiInstance") == (false
                     break;
             }
         }
+        fetchMods();
         await init();
-        await installModLoader();
         session.fromPartition("some-partition").setPermissionRequestHandler((_webContents, permission, callback) => {
             if (permission === "notifications") {
                 // Approves the permissions request

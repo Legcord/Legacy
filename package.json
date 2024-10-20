@@ -1,17 +1,16 @@
 {
-    "name": "legcord-legacy",
-    "version": "3.2.8",
-    "description": "Legcord is a custom client designed to enhance your Discord experience while keeping everything lightweight.",
+    "name": "legacycord",
+    "version": "1.0.0",
+    "description": "Legacycord is a custom client designed to enhance your Discord experience while keeping everything lightweight.",
     "main": "ts-out/main.js",
     "engines": {
         "node": ">=18.0.0"
     },
     "scripts": {
-        "build": "tsc && copyfiles -u 1 src/**/*.html src/**/**/*.css src/**/**/*.js ts-out/ && copyfiles package.json ts-out/ && copyfiles assets/**/** ts-out/",
+        "build": "npm run build:plugins && tsc && copyfiles -u 1 src/**/*.html src/**/**/*.css src/**/**/*.js ts-out/ && copyfiles package.json ts-out/ && copyfiles assets/**/** ts-out/",
+        "build:plugins": "lune ci --repoSubDir src/shelter --to ts-out/plugins && node ./scripts/fixBundles.js",
         "watch": "tsc -w",
         "start": "npm run build && electron ./ts-out/main.js",
-        "startThemeManager": "npm run build && electron ./ts-out/main.js themes",
-        "startKeybindManager": "npm run build && electron ./ts-out/main.js keybinds",
         "startWayland": "npm run build && electron ./ts-out/main.js --ozone-platform-hint=auto --enable-features=WebRTCPipeWireCapturer,WaylandWindowDecorations --disable-gpu",
         "package": "npm run build && electron-builder",
         "packageQuick": "npm run build && electron-builder --dir",
@@ -22,14 +21,14 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/legcord/legcord.git"
+        "url": "git+https://github.com/legcord/legacycord.git"
     },
     "author": "smartfrigde",
     "license": "OSL-3.0",
     "bugs": {
-        "url": "https://github.com/legcord/legcord/issues"
+        "url": "https://github.com/legcord/legacycord/issues"
     },
-    "homepage": "https://github.com/legcord/legcord#readme",
+    "homepage": "https://github.com/legcord/legacycord#readme",
     "devDependencies": {
         "@types/node": "^18.11.9",
         "@types/ws": "^8.5.3",
@@ -42,6 +41,8 @@
         "eslint-config-dmitmel": "github:dmitmel/eslint-config-dmitmel",
         "eslint-plugin-node": "^11.1.0",
         "eslint-plugin-prettier": "^4.2.1",
+        "@uwu/lune": "^1.4.2",
+        "@uwu/shelter-defs": "^1.4.1",
         "prettier": "^2.7.1",
         "typescript": "^4.9.3"
     },

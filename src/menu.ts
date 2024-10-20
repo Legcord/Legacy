@@ -1,6 +1,5 @@
 import {BrowserWindow, Menu, app, clipboard} from "electron";
 import {mainWindow} from "./window";
-import {createSettingsWindow} from "./settings/main";
 
 function paste(contents: any): void {
     const contentTypes = clipboard.availableFormats().toString();
@@ -28,7 +27,17 @@ export async function setMenu(): Promise<void> {
                     label: "Open settings",
                     accelerator: "CmdOrCtrl+Shift+'",
                     click() {
-                        createSettingsWindow();
+                        mainWindow.show();
+
+                        void mainWindow.webContents.executeJavaScript(`window.shelter.flux.dispatcher.dispatch({
+                                "type": "USER_SETTINGS_MODAL_OPEN",
+                                "section": "My Account",
+                                "subsection": null,
+                                "openWithoutBackstack": false
+                            })`);
+                        void mainWindow.webContents.executeJavaScript(
+                            `window.shelter.flux.dispatcher.dispatch({type: "LAYER_PUSH", component: "USER_SETTINGS"})`
+                        );
                     }
                 },
                 {

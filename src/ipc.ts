@@ -1,60 +1,88 @@
 //ipc stuff
-import {app, clipboard, desktopCapturer, ipcMain, nativeImage, shell} from "electron";
-import {mainWindow} from "./window";
+import {app, clipboard, desktopCapturer, ipcMain, shell, SourcesOptions} from "electron";
 import {
-    Settings,
     getConfig,
     getConfigLocation,
     getDisplayVersion,
     getLang,
     getLangName,
+    getRawLang,
     getVersion,
-    modInstallState,
-    packageVersion,
+    refreshGlobalKeybinds,
+    setConfig,
     setConfigBulk,
-    setLang,
-    sleep
+    setLang
 } from "./utils";
-import {customTitlebar} from "./main";
-import {createSettingsWindow} from "./settings/main";
+
 import os from "os";
 import fs from "fs";
 import path from "path";
 import {createTManagerWindow} from "./themeManager/main";
 import {splashWindow} from "./splash/main";
-import {createKeybindWindow} from "./keybindMaker/main";
+import isDev from "electron-is-dev";
+import type {Keybind} from "./@types/keybind.js";
+import type {Settings} from "./@types/settings.js";
+import {mainWindow} from "./window";
+
 const userDataPath = app.getPath("userData");
 const storagePath = path.join(userDataPath, "/storage/");
 const themesPath = path.join(userDataPath, "/themes/");
 const pluginsPath = path.join(userDataPath, "/plugins/");
+const quickCssPath = path.join(userDataPath, "/quickCss.css");
+
+function ifExistsRead(path: string): string | undefined {
+    if (fs.existsSync(path)) return fs.readFileSync(path, "utf-8");
+}
+
 export function registerIpc(): void {
-    ipcMain.on("get-app-path", (event) => {
-        event.reply("app-path", app.getAppPath());
+    ipcMain.handle("getShelterBundle", () => {
+        return {
+            js: ifExistsRead(path.join(app.getPath("userData"), "shelter.js")),
+            enabled: true
+        };
+    });
+    ipcMain.handle("getVencordBundle", async () => {
+        return {
+            js: ifExistsRead(path.join(app.getPath("userData"), "vencord.js")),
+            css: ifExistsRead(path.join(app.getPath("userData"), "vencord.css")),
+            enabled: (await getConfig("mods")).includes("vencord")
+        };
+    });
+    ipcMain.handle("getEquicordBundle", async () => {
+        return {
+            js: ifExistsRead(path.join(app.getPath("userData"), "equicord.js")),
+            css: ifExistsRead(path.join(app.getPath("userData"), "equicord.css")),
+            enabled: (await getConfig("mods")).includes("equicord")
+        };
+    });
+    ipcMain.handle("getCustomBundle", async () => {
+        const enabled = (await getConfig("mods")).includes("custom");
+        if (enabled) {
+            return {
+                js: ifExistsRead(path.join(app.getPath("userData"), "custom.js")),
+                css: ifExistsRead(path.join(app.getPath("userData"), "custom.css")),
+                enabled
+            };
+        }
+    });
+    ipcMain.on("splashEnd", async () => {
+        splashWindow.close();
+        if (await getConfig("startMinimized")) {
+            mainWindow.hide();
+        } else {
+            mainWindow.show();
+        }
     });
     ipcMain.on("setLang", (_event, lang: string) => {
         setLang(lang);
     });
+    ipcMain.on("getLangSync", (event, toGet: string) => {
+        event.reply("langString", getLang(toGet));
+    });
     ipcMain.handle("getLang", (_event, toGet: string) => {
         return getLang(toGet);
     });
-    ipcMain.on("open-external-link", (_event, href: string) => {
-        shell.openExternal(href);
-    });
-    ipcMain.on("setPing", (_event, pingCount: number) => {
-        switch (os.platform()) {
-            case "linux" ?? "macos":
-                app.setBadgeCount(pingCount);
-                break;
-            case "win32":
-                if (pingCount > 0) {
-                    let image = nativeImage.createFromPath(path.join(__dirname, "../", `/assets/ping.png`));
-                    mainWindow.setOverlayIcon(image, "badgeCount");
-                } else {
-                    mainWindow.setOverlayIcon(null, "badgeCount");
-                }
-                break;
-        }
-    });
+
     ipcMain.on("win-maximize", () => {
         mainWindow.maximize();
     });
@@ -77,7 +105,7 @@ export function registerIpc(): void {
         mainWindow.hide();
     });
     ipcMain.on("win-quit", () => {
-        app.exit();
+        app.quit();
     });
     ipcMain.on("get-app-version", (event) => {
         event.returnValue = getVersion();
@@ -85,96 +113,83 @@ export function registerIpc(): void {
     ipcMain.on("displayVersion", (event) => {
         event.returnValue = getDisplayVersion();
     });
-    ipcMain.on("modInstallState", (event) => {
-        event.returnValue = modInstallState;
-    });
-    ipcMain.on("get-package-version", (event) => {
-        event.returnValue = packageVersion;
-    });
-    ipcMain.on("splashEnd", async () => {
-        splashWindow.close();
-        if (await getConfig("startMinimized")) {
-            mainWindow.hide();
-        } else {
-            mainWindow.show();
-        }
-    });
     ipcMain.on("restart", () => {
         app.relaunch();
         app.exit();
     });
-    ipcMain.on("saveSettings", (_event, args) => {
-        setConfigBulk(args);
+    ipcMain.on("isDev", (event) => {
+        event.returnValue = isDev;
     });
-    ipcMain.on("minimizeToTray", async (event) => {
-        event.returnValue = await getConfig("minimizeToTray");
+    ipcMain.on("setConfig", (_event, key: keyof Settings, value: string) => {
+        setConfig(key, value);
     });
-    ipcMain.on("channel", async (event) => {
-        event.returnValue = await getConfig("channel");
+    ipcMain.on("addKeybind", async (_event, keybind: Keybind) => {
+        const keybinds = await getConfig("keybinds");
+        keybinds.push(keybind);
+        setConfig("keybinds", keybinds);
+        refreshGlobalKeybinds();
     });
-    ipcMain.on("clientmod", async (event) => {
-        event.returnValue = await getConfig("mods");
+    ipcMain.on("toggleKeybind", async (_event, id: string) => {
+        const keybinds = await getConfig("keybinds");
+        const keybind = keybinds[(await keybinds).findIndex((x) => x.id === id)];
+        keybind.enabled = !keybind.enabled;
+        setConfig("keybinds", keybinds);
+        refreshGlobalKeybinds();
     });
-    ipcMain.on("trayIcon", async (event) => {
-        event.returnValue = await getConfig("trayIcon");
+    ipcMain.on("removeKeybind", async (_event, id: string) => {
+        const keybinds = await getConfig("keybinds");
+        (await keybinds).splice(
+            (await keybinds).findIndex((x) => x.id === id),
+            1
+        );
+        setConfig("keybinds", keybinds);
+        refreshGlobalKeybinds();
     });
-    ipcMain.on("disableAutogain", async (event) => {
-        event.returnValue = await getConfig("disableAutogain");
+    ipcMain.on("getEntireConfig", (event) => {
+        const rawData = fs.readFileSync(getConfigLocation(), "utf-8");
+        event.returnValue = JSON.parse(rawData) as Settings;
     });
-    ipcMain.on("titlebar", (event) => {
-        event.returnValue = customTitlebar;
+    ipcMain.on("getTranslations", (event) => {
+        event.returnValue = getRawLang();
     });
-    ipcMain.on("mobileMode", async (event) => {
-        event.returnValue = await getConfig("mobileMode");
+    ipcMain.on("getConfig", (event, arg: any) => {
+        event.returnValue = getConfig(arg);
     });
-    ipcMain.on("openSettingsWindow", () => {
-        createSettingsWindow();
+    ipcMain.on("openThemesWindow", () => {
+        void createTManagerWindow();
     });
-    ipcMain.on("openManagerWindow", () => {
-        createTManagerWindow();
-    });
-    ipcMain.on("openKeybindWindow", () => {
-        createKeybindWindow();
-    });
-    ipcMain.on("setting-legcordCSP", async (event) => {
-        if (await getConfig("legcordCSP")) {
-            event.returnValue = true;
-        } else {
-            event.returnValue = false;
-        }
-    });
-    ipcMain.handle("DESKTOP_CAPTURER_GET_SOURCES", (_event, opts) => desktopCapturer.getSources(opts));
+    // NOTE - I assume this would return sources based on the fact that the function only ingests sources
+    ipcMain.handle("DESKTOP_CAPTURER_GET_SOURCES", (_event, opts: SourcesOptions) => desktopCapturer.getSources(opts));
     ipcMain.on("saveSettings", (_event, args: Settings) => {
         console.log(args);
         setConfigBulk(args);
     });
-    ipcMain.on("openStorageFolder", async () => {
+    ipcMain.on("openStorageFolder", () => {
         shell.showItemInFolder(storagePath);
-        await sleep(1000);
     });
-    ipcMain.on("openThemesFolder", async () => {
+    ipcMain.on("openThemesFolder", () => {
         shell.showItemInFolder(themesPath);
-        await sleep(1000);
     });
-    ipcMain.on("openPluginsFolder", async () => {
+    ipcMain.on("openPluginsFolder", () => {
         shell.showItemInFolder(pluginsPath);
-        await sleep(1000);
     });
-    ipcMain.on("openCrashesFolder", async () => {
+    ipcMain.on("openQuickCssFile", () => {
+        void shell.openPath(quickCssPath);
+    });
+    ipcMain.on("openCrashesFolder", () => {
         shell.showItemInFolder(path.join(app.getPath("temp"), `${app.getName()} Crashes`));
-        await sleep(1000);
     });
-    ipcMain.on("getLangName", async (event) => {
-        event.returnValue = await getLangName();
+    ipcMain.on("getLangName", (event) => {
+        event.returnValue = getLangName();
     });
-    ipcMain.on("crash", async () => {
+    ipcMain.on("crash", () => {
         process.crash();
     });
-    ipcMain.handle("getSetting", (_event, toGet: keyof Settings) => {
-        return getConfig(toGet);
+    ipcMain.on("getOS", (event) => {
+        event.returnValue = process.platform;
     });
     ipcMain.on("copyDebugInfo", () => {
-        let settingsFileContent = fs.readFileSync(getConfigLocation(), "utf-8");
+        const settingsFileContent = fs.readFileSync(getConfigLocation(), "utf-8");
         clipboard.writeText(
             `**OS:** ${os.platform()} ${os.version()}\n**Architecture:** ${os.arch()}\n**Legcord version:** ${getVersion()}\n**Electron version:** ${
                 process.versions.electron
