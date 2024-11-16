@@ -1,4 +1,4 @@
-# Legacycord
+# Legcord Legacy
 Discord client for Windows 7 and Mac OS X, loosely based on old Legcord codebase. 
 
 These builds are based on severally outdated Electron versions, only use this if you can't apply [VxKex](https://github.com/vxiiduu/VxKex/) on Windows or [OCLP](https://dortania.github.io/OpenCore-Legacy-Patcher/) on macOS.    
@@ -18,4 +18,4 @@ Runs Electron 27
 Runs Electron 20
 ### [Download]()
 
-Discord is trademark of Discord Inc. Legacycord is not affiliated with or endorsed by Discord Inc.
+Discord is trademark of Discord Inc. Legcord Legacy is not affiliated with or endorsed by Discord Inc.
