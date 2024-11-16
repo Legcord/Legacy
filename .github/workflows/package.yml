@@ -1,0 +1,115 @@
+name: Package
+on:
+  push:
+      branches: 
+        - dev
+        - stable
+jobs:
+    package:
+        continue-on-error: true
+        strategy:
+            matrix:
+                os: [macos-latest, windows-latest, ubuntu-latest]
+        runs-on: ${{matrix.os}}
+        env:
+          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Add commit to version
+              if: github.ref_name == 'dev'
+              run: cat <<< $(jq --arg ver "$(jq -r '.version' package.json)-$(git rev-parse --short HEAD)" '.version = $ver' package.json) > package.json
+              shell: bash
+
+            - name: Prepare PNPM
+              uses: pnpm/action-setup@v4
+        
+            - name: Prepare Node.js
+              uses: actions/setup-node@v4
+              with:
+                node-version-file: package.json
+                cache: pnpm
+        
+            - name: Install dependencies
+              run: pnpm i
+
+            - name: Install Electron 22 on Windows
+              if: matrix.os == 'windows-latest'
+              run: pnpm i electron@v22.3.27
+
+            - name: Build TypeScript
+              run: pnpm build
+
+            - name: Install SnapCraft
+              if: matrix.os == 'macos-latest'
+              uses: samuelmeuli/action-snapcraft@v2
+
+            - name: Load Electron cache
+              uses: actions/cache/restore@v4
+              with:
+                  path: .cache
+                  key: electron-zips.${{matrix.os}}
+
+            # Sadly, it makes more sense to separate builds per platform
+            - name: Build Electron for MacOS (DMG & ZIP)
+              if: matrix.os == 'macos-latest'
+              run: pnpm electron-builder -m zip dmg
+
+            - name: Build Electron for Windows (NSIS, AppX, & ZIP)
+              if: matrix.os == 'windows-latest'
+              run: pnpm electron-builder --ia32 --x64 -w nsis zip
+
+            - name: Save Electron Cache
+              uses: actions/cache/save@v4
+              with:
+                  path: .cache
+                  key: electron-zips.${{matrix.os}}
+
+            - name: Collect artifacts
+              run: 
+                mkdir artifacts |
+                find dist/. -maxdepth 1 -type f -exec mv {} artifacts \;
+              shell: bash
+            
+            - name: Upload artifactsstable
+              uses: actions/upload-artifact@v4
+              with:
+                name: ${{matrix.os}}-artifacts
+                path: artifacts/*
+
+    release:
+        runs-on: ubuntu-latest
+        needs:
+            - package
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        steps:
+          - name: Download artifacts
+            uses: actions/download-artifact@v4
+            with:
+              path: release-files
+
+          - name: Create release
+            if: github.ref_name == 'dev'
+            uses: ncipollo/release-action@v1
+            with:
+                name: Rolling Dev Build
+                allowUpdates: true
+                removeArtifacts: true
+                prerelease: true
+                body: "Built against https://github.com/Legcord/Legacy/tree/dev on every commit."
+                draft: false
+                tag: devbuild
+                artifacts: release-files/**/*
+
+          - name: Create release
+            if: github.ref_name == 'stable'
+            uses: ncipollo/release-action@v1
+            with:
+              name: Stable Release Draft
+              prerelease: false
+              tag: stable
+              draft: true
+              artifacts: release-files/**/*

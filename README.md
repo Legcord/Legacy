@@ -10,11 +10,7 @@ Runs Electron 22
 ### [64-bit download]()
 ### [32-bit download]()
 
-# macOS 10.13/10.14
-Runs Electron 27
-### [Download]()
-
-# OS X 10.11/10.12
+# OS X 10.11/10.12/10.13/10.14
 Runs Electron 20
 ### [Download]()
 
