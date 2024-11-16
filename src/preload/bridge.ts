@@ -66,6 +66,7 @@ contextBridge.exposeInMainWorld("legcord", {
             return result as string;
         }),
     getDisplayMediaSelector,
+    displayBalloon: (title: string, body: string) => ipcRenderer.send("displayBalloon", title, body),
     version: ipcRenderer.sendSync("get-app-version", "app-version") as string,
     platform: ipcRenderer.sendSync("getOS") as string,
     restart: () => ipcRenderer.send("restart"),

@@ -14,6 +14,7 @@ export interface LegcordWindow {
     getDisplayMediaSelector: () => Promise<string>;
     version: string;
     platform: string;
+    displayBalloon: (title: string, content: string) => void;
     openThemesWindow: () => void;
     openQuickCssFile: () => void;
     restart: () => void;

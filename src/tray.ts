@@ -1,4 +1,4 @@
-import {Menu, Tray, app, nativeImage} from "electron";
+import {Menu, Tray, app, ipcMain, nativeImage} from "electron";
 import {createInviteWindow, mainWindow} from "./window";
 import {getConfig, getDisplayVersion} from "./utils";
 import * as path from "path";
@@ -77,6 +77,13 @@ app.whenReady().then(async () => {
         tray.setToolTip(clientName);
         tray.on("click", function () {
             mainWindow.show();
+        });
+        ipcMain.on("displayBalloon", (e, title: string, content: string) => {
+            console.log("Display balloon");
+            tray.displayBalloon({
+                title: title,
+                content: content
+            });
         });
     }
 });

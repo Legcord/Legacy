@@ -7,7 +7,8 @@ const requiredPlugins: Record<string, [string, {isVisible: boolean; allowedActio
     "legcord-screenshare": [
         "legcord://plugins/screenshareQualityFix/",
         {isVisible: true, allowedActions: {toggle: true}}
-    ]
+    ],
+    "legcord-balloonNotifs": ["legcord://plugins/balloonNotifs/", {isVisible: true, allowedActions: {toggle: true}}]
 };
 async function inject() {
     try {

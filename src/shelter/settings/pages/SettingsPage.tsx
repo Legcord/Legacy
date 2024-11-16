@@ -62,23 +62,8 @@ export function SettingsPage() {
                 <option value="default">{store.i18n["settings-theme-default"]}</option>
                 <option value="native">{store.i18n["settings-theme-native"]}</option>
                 <Show when={window.legcord.platform === "win32"}>
-                    <option value="overlay">{store.i18n["settings-theme-overlay"]}</option>
+                    <option value="transparent">{store.i18n["settings-theme-transparent"]}</option>
                 </Show>
-            </DropdownItem>
-            <DropdownItem
-                value={store.settings.transparency}
-                onChange={(e) =>
-                    setConfig("transparency", (e.target as HTMLInputElement).value as Settings["transparency"], true)
-                }
-                title={store.i18n["settings-transparency"]}
-                note={store.i18n["settings-transparency-desc"]}
-                link="https://github.com/Legcord/Legcord/wiki/Transparency-options"
-            >
-                <option value="universal">{store.i18n["settings-transparency-universal"]}</option>
-                <Show when={window.legcord.platform === "win32"}>
-                    <option value="modern">{store.i18n["settings-transparency-modern"]}</option>
-                </Show>
-                <option value="none">{store.i18n["settings-none"]}</option>
             </DropdownItem>
             <DropdownItem
                 value={store.settings.trayIcon}
@@ -192,25 +177,15 @@ export function SettingsPage() {
                 {store.i18n["settings-category-legacy"]}
             </Header>
             <SwitchItem
-                note={store.i18n["settings-useLegacyCapturer-desc"]}
-                value={store.settings.useLegacyCapturer}
-                onChange={(e: boolean) => setConfig("useLegacyCapturer", e, true)}
+                note={store.i18n["settings-legacyDynamicIcon-desc"]}
+                value={store.settings.legacyDynamicIcon}
+                onChange={(e: boolean) => setConfig("legacyDynamicIcon", e, true)}
             >
-                {store.i18n["settings-useLegacyCapturer"]}
+                {store.i18n["settings-legacyDynamicIcon"]}
             </SwitchItem>
             <Header class={classes.category} tag={HeaderTags.H5}>
                 {store.i18n["settings-category-debug"]}
             </Header>
-            <DropdownItem
-                value={store.settings.audio}
-                onChange={(e) => setConfig("audio", (e.target as HTMLInputElement).value as Settings["audio"])}
-                title={store.i18n["settings-audio"]}
-                note={store.i18n["settings-audio-desc"]}
-                link="https://www.electronjs.org/docs/latest/api/session#sessetdisplaymediarequesthandlerhandler-opts"
-            >
-                <option value="loopback">Loopback</option>
-                <option value="loopbackWithMute">Loopback with mute</option>
-            </DropdownItem>
             <SwitchItem
                 note={store.i18n["settings-hardwareAcceleration-desc"]}
                 value={store.settings.hardwareAcceleration}
@@ -225,6 +200,10 @@ export function SettingsPage() {
             >
                 {store.i18n["settings-disableHttpCache"]}
             </SwitchItem>
+            <Button size={ButtonSizes.MAX} onClick={window.legcord.settings.openCustomIconDialog}>
+                {store.i18n["settings-openCustomIconDialog"]}
+            </Button>
+            <br />
             <Button size={ButtonSizes.MAX} onClick={window.legcord.settings.openStorageFolder}>
                 {store.i18n["settings-storageFolder"]}
             </Button>

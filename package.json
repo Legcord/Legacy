@@ -1,7 +1,7 @@
 {
-    "name": "legacycord",
+    "name": "legcord-legacy",
     "version": "1.0.0",
-    "description": "Legacycord is a custom client designed to enhance your Discord experience while keeping everything lightweight.",
+    "description": "Legcord Legacy is a custom client designed to enhance your Discord experience while keeping everything lightweight.",
     "main": "ts-out/main.js",
     "engines": {
         "node": ">=18.0.0"
@@ -21,14 +21,14 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/legcord/legacycord.git"
+        "url": "git+https://github.com/Legcord/Legacy.git"
     },
     "author": "smartfrigde",
     "license": "OSL-3.0",
     "bugs": {
-        "url": "https://github.com/legcord/legacycord/issues"
+        "url": "https://github.com/Legcord/Legacy/issues"
     },
-    "homepage": "https://github.com/legcord/legacycord#readme",
+    "homepage": "https://github.com/Legcord/Legacy#readme",
     "devDependencies": {
         "@types/node": "^18.11.9",
         "@types/ws": "^8.5.3",
