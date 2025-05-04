@@ -1,3 +1,7 @@
+![obraz](https://github.com/user-attachments/assets/720eb2b6-c20a-4402-830f-12537a0c081d)
+
+
+
 # Legcord Legacy
 Discord client for Windows 7 and Mac OS X, loosely based on old Legcord codebase. 
 
